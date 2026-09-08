@@ -22,10 +22,6 @@ function onOpen() {
       'Create Lists Sheet',
       'createListsSheet'
     )
-    .addItem(
-      'Format Current Sheet',
-      'formatCurrentSheet'
-    )
     .addToUi();
 
 

@@ -63,18 +63,3 @@ function rebuildLists() {
   }
 }
 
-
-// ============================================================
-// FORMAT CURRENT SHEET
-// ============================================================
-
-function formatCurrentSheet() {
-  const sheet =
-    SpreadsheetApp
-      .getActiveSpreadsheet()
-      .getActiveSheet();
-
-  formatWorkTracker(sheet);
-  setupDropdowns(sheet);
-  setupConditionalFormatting(sheet);
-}

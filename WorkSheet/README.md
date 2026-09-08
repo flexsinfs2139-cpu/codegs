@@ -51,7 +51,7 @@ WorkSheet/
 | File | Primary Functions | Description |
 | :--- | :--- | :--- |
 | **`Config.gs`** | `CONFIG` object | Stores global variables, header names, default tasks per day, default colors, and array values for Projects, Categories, Priorities, and Statuses. |
-| **`Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists`, `formatCurrentSheet` | Serves as the operational entry point coordinating setup across modules. |
+| **`Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` | Serves as the operational entry point coordinating setup across modules. |
 | **`MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
 | **`Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
 | **`Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
@@ -156,7 +156,6 @@ WorkSheet/
 | :--- | :--- | :--- | :--- |
 | **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days and styling. |
 | **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
-| **Setup** | Format Current Sheet | `formatCurrentSheet` | Re-applies fonts, column widths, dropdowns, and formatting. |
 | **Tasks** | Fill task for today | `fillTaskForToday` | Creates a temporary `Date Month Year` staging sheet to add multiple tasks for today, then merges them into the month sheet and deletes the staging sheet. |
 | **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Asks the user for a date in the current month, creates the staging sheet, merges tasks, and cleans up. |
 | **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
@@ -236,7 +235,5 @@ flowchart TD
 
 1. **Date Format Alignment**:
    `MonthSheet.gs` formats dates as `'MMdd'` (e.g., `0908`), whereas `addTaskRow()` in `Tasks.gs` formats dates as `'ddMMM'` (e.g., `08SEP`). For visual consistency across rows, it is recommended to standardize on a single date format across both files.
-2. **Format Current Sheet**:
-   `formatCurrentSheet()` in `Code.gs` reapplies fonts, dropdowns, and status/priority formatting, but does not currently invoke `setupWeekendFormatting()`. Calling `setupWeekendFormatting(sheet)` inside `formatCurrentSheet` ensures weekends are styled when manually reformatting.
-3. **Column Index Flexibility**:
+2. **Column Index Flexibility**:
    Validation rules in `Tasks.gs` map hardcoded column indices (3, 5, 6, 7). If headers in `Config.gs` are reordered or added, ensure column indices in `Tasks.gs`, `Formatting.gs`, and `ConditionalFormatting.gs` are synchronized.

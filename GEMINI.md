@@ -18,7 +18,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | File | Primary Role | Key Functions / Objects |
 | :--- | :--- | :--- |
 | [`WorkSheet/Config.gs`](./WorkSheet/Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Row Heights) |
-| [`WorkSheet/Code.gs`](./WorkSheet/Code.gs) | Main entry points | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists`, `formatCurrentSheet` |
+| [`WorkSheet/Code.gs`](./WorkSheet/Code.gs) | Main entry points | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` |
 | [`WorkSheet/MonthSheet.gs`](./WorkSheet/MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
 | [`WorkSheet/Tasks.gs`](./WorkSheet/Tasks.gs) | Task operations | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` |
 | [`WorkSheet/Lists.gs`](./WorkSheet/Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
@@ -53,9 +53,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - `MonthSheet.gs` formats dates as `'MMdd'` (e.g. `0908`).
    - `Tasks.gs:addTaskRow()` formats dates as `'ddMMM'` (e.g. `08SEP`).
    - *Target Fix*: Unify into a single `CONFIG.DATE_FORMAT` property in `Config.gs`.
-3. **`formatCurrentSheet()` Weekend Formatting**:
-   - `formatCurrentSheet()` in `Code.gs` omits `setupWeekendFormatting(sheet)`. Calling `formatCurrentSheet` loses Saturday/Sunday highlights.
-4. **`clearTasks()` Target Safety**:
+3. **`clearTasks()` Target Safety**:
    - `clearTasks()` runs on `getActiveSheet()` without verifying if the active sheet is `Lists`. If run on the Lists sheet, it erases options and sets status to 'Pending'.
 
 ---
