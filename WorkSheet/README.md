@@ -116,14 +116,15 @@ WorkSheet/
 - **Protection**: The `Lists` sheet is automatically trimmed to fit exact list items and locked against editing to prevent accidental alterations.
 
 ### 3. Dynamic Task Management
-- **Add Task Row**:
-  - Menu: **Tasks** > **Add Task Row**.
-  - Appends a new task row for today's date at the end of the active sheet.
-  - Automatically configures dropdown validations, wraps text, sets row height to 42px, and focuses the cursor directly on the **Task** column (Column D) for immediate typing.
-- **Clear Tasks**:
-  - Menu: **Tasks** > **Clear Tasks**.
-  - Displays a confirmation prompt.
-  - Clears task data (columns Project through Notes) from row 2 downwards while preserving dates, days, and resetting status to `Pending`.
+- **Fill Task for Today**:
+  - Menu: **Tasks** > **Fill task for today**.
+  - Opens/creates a staging sheet named `Date Month Year` (e.g. `08 September 2026`) with prefilled dates, headers, formatting, and dropdown validations.
+  - Launches a side panel allowing the user to enter multiple tasks for the day.
+  - Clicking **Save Tasks to Month Sheet** writes the tasks into the monthly sheet (updating the existing date row and inserting new rows after it for additional tasks with the same date), then deletes the staging sheet.
+- **Fill Task for Selected Date in the Current Month**:
+  - Menu: **Tasks** > **Fill task for selected date in the current month**.
+  - Asks the user for the day of the month (`1–31`) or date (`DD/MM/YYYY`).
+  - Creates the staging sheet for that date, enables multi-task entry, transfers the rows, and cleans up the staging sheet.
 
 ### 4. Formatting & Visual Hierarchy
 - **Header**: Background color `#d9ead3` (soft green), bold Arial text, centered, height 28px.
@@ -155,8 +156,8 @@ WorkSheet/
 | **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days and styling. |
 | **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
 | **Setup** | Format Current Sheet | `formatCurrentSheet` | Re-applies fonts, column widths, dropdowns, and formatting. |
-| **Tasks** | Add Task Row | `addTaskRow` | Adds an additional row for today's date. |
-| **Tasks** | Clear Tasks | `clearTasks` | Clears task entries and resets statuses to Pending. |
+| **Tasks** | Fill task for today | `fillTaskForToday` | Creates a temporary `Date Month Year` staging sheet to add multiple tasks for today, then merges them into the month sheet and deletes the staging sheet. |
+| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Asks the user for a date in the current month, creates the staging sheet, merges tasks, and cleans up. |
 | **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
 | **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Generates the status report for a selected row's date or user-entered date in a modal dialog. |
 

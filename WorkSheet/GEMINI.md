@@ -40,6 +40,11 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - Implemented `DSR.gs` to extract tasks by date, categorize by project into Tasks Completed, Work in Progress, Blockers/Issues, and Plan for Next Working Day.
    - Built styled HTML modal dialog matching the user's UI specification (`Copy to Clipboard`, `Save to Sheet`, `Download .txt`, `Close`).
    - Updated `Menu.gs` to only have the two requested options: `Generate DSR for today` and `Generate DSR for selected date in the month`.
+4. **Task Staging & Insertion Workflow**:
+   - Updated `Tasks` menu to strictly have two options: `Fill task for today` and `Fill task for selected date in the current month`.
+   - Creates a temporary staging sheet named `Date Month Year` (e.g. `08 September 2026`) for entering multiple tasks.
+   - Supports inserting new row(s) after the date with the same date when multiple tasks are added.
+   - Automatically deletes the staging sheet and refocuses the month sheet after saving.
 
 ### Outstanding Review Findings & Next Steps:
 1. **Date Format Divergence**:

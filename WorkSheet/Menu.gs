@@ -35,12 +35,12 @@ function onOpen() {
 
   ui.createMenu('Tasks')
     .addItem(
-      'Add Task Row',
-      'addTaskRow'
+      'Fill task for today',
+      'fillTaskForToday'
     )
     .addItem(
-      'Clear Tasks',
-      'clearTasks'
+      'Fill task for selected date in the current month',
+      'fillTaskForSelectedDate'
     )
     .addToUi();
 
