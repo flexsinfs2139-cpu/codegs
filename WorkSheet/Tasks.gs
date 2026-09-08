@@ -3,6 +3,19 @@
 // ============================================================
 
 /**
+ * Headers for the temporary Task Entry (Staging) sheet.
+ * Date and Day are omitted here as requested; they are inferred from the sheet date.
+ */
+const STAGING_HEADERS = [
+  'Project',
+  'Task',
+  'Category',
+  'Priority',
+  'Status',
+  'Notes'
+];
+
+/**
  * Menu Action: Fill task for today.
  * Opens or creates a staging sheet named "Date Month Year" (e.g. "08 September 2026").
  */
@@ -14,29 +27,21 @@ function fillTaskForToday() {
 
 /**
  * Menu Action: Fill task for selected date in the current month.
- * Asks the user for the day/date, then creates the staging sheet.
+ * Asks ONLY for a day number between 1 and the total days of the current month.
  */
 function fillTaskForSelectedDate() {
-  const ss = getSpreadsheet();
-  const sheet = ss.getActiveSheet();
   const timezone = getTimezone();
+  const today = getToday();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed (e.g. 8 for September)
+
+  // Calculate total days in the current month (28, 29, 30, or 31)
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
   const ui = SpreadsheetApp.getUi();
-
-  let suggestedDate = null;
-  const activeRow = sheet.getActiveCell().getRow();
-
-  if (activeRow > 1 && sheet.getName() !== CONFIG.LISTS_SHEET_NAME) {
-    const cellValue = sheet.getRange(activeRow, 1).getValue();
-    suggestedDate = parseDateFromCell(cellValue, sheet.getName(), timezone);
-  }
-
-  const defaultDateStr = suggestedDate
-    ? Utilities.formatDate(suggestedDate, timezone, 'dd/MM/yyyy')
-    : Utilities.formatDate(getToday(), timezone, 'dd/MM/yyyy');
-
   const response = ui.prompt(
     'Fill Task for Selected Date',
-    `Enter day of current month (1–31) or date (DD/MM/YYYY) [Default: ${defaultDateStr}]:`,
+    `Enter day of the current month (1–${daysInMonth}):`,
     ui.ButtonSet.OK_CANCEL
   );
 
@@ -44,24 +49,25 @@ function fillTaskForSelectedDate() {
     return;
   }
 
-  const input = response.getResponseText().trim() || defaultDateStr;
-  const targetDate = resolveDateInput(input, sheet.getName(), timezone);
+  const input = response.getResponseText().trim();
+  const dayNumber = parseInt(input, 10);
 
-  if (!targetDate) {
+  if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > daysInMonth) {
     ui.alert(
-      'Invalid Date',
-      'Please enter a valid day of the month (1–31) or date (DD/MM/YYYY).',
+      'Invalid Day Number',
+      `Please enter a valid number between 1 and ${daysInMonth}.`,
       ui.ButtonSet.OK
     );
     return;
   }
 
+  const targetDate = new Date(currentYear, currentMonth, dayNumber);
   openTaskStagingSheet(targetDate);
 }
 
 /**
  * Creates and sets up the temporary "Date Month Year" staging sheet
- * and displays the task entry sidebar.
+ * without Date or Day columns, and displays the task entry sidebar.
  *
  * @param {Date} targetDate
  */
@@ -81,7 +87,7 @@ function openTaskStagingSheet(targetDate) {
     monthSheet = ss.getSheetByName(targetMonthSheetName);
   }
 
-  // If staging sheet already exists, activate it and show sidebar
+  // If staging sheet already exists, activate it and reopen sidebar
   let stagingSheet = ss.getSheetByName(stagingSheetName);
   if (stagingSheet) {
     ss.setActiveSheet(stagingSheet);
@@ -92,13 +98,21 @@ function openTaskStagingSheet(targetDate) {
   // Create the staging sheet
   stagingSheet = ss.insertSheet(stagingSheetName);
 
-  // 1. Setup Header
+  // Store target date in developer metadata for exact retrieval
+  try {
+    stagingSheet.addDeveloperMetadata(
+      'TARGET_DATE',
+      Utilities.formatDate(targetDate, timezone, 'yyyy-MM-dd')
+    );
+  } catch (e) {}
+
+  // 1. Setup Header (6 task columns, omitting Date and Day)
   stagingSheet
-    .getRange(1, 1, 1, CONFIG.HEADERS.length)
-    .setValues([CONFIG.HEADERS]);
+    .getRange(1, 1, 1, STAGING_HEADERS.length)
+    .setValues([STAGING_HEADERS]);
 
   stagingSheet
-    .getRange(1, 1, 1, CONFIG.HEADERS.length)
+    .getRange(1, 1, 1, STAGING_HEADERS.length)
     .setBackground(CONFIG.COLORS.HEADER)
     .setFontFamily('Arial')
     .setFontWeight('bold')
@@ -106,69 +120,83 @@ function openTaskStagingSheet(targetDate) {
 
   stagingSheet.setRowHeight(1, 28);
 
-  // 2. Determine Date and Day labels for the selected date
-  const dateLabel = Utilities.formatDate(targetDate, timezone, 'MMdd');
-  const dayLabel = Utilities.formatDate(targetDate, timezone, 'EEE');
-
-  // 3. Pre-fill initial 5 rows for user input
+  // 2. Pre-fill initial 5 blank task rows
   const initialRows = [];
   for (let i = 0; i < 5; i++) {
     initialRows.push([
-      dateLabel,
-      dayLabel,
-      '',
-      '',
-      '',
-      'Medium',
-      'Pending',
-      ''
+      '',          // Project
+      '',          // Task
+      '',          // Category
+      'Medium',    // Priority
+      'Pending',   // Status
+      ''           // Notes
     ]);
   }
 
   stagingSheet
-    .getRange(2, 1, initialRows.length, CONFIG.HEADERS.length)
+    .getRange(2, 1, initialRows.length, STAGING_HEADERS.length)
     .setValues(initialRows);
 
-  // 4. Formatting dimensions, fonts, and wrap strategy
-  const widths = [75, 60, 130, 315, 125, 90, 125, 300];
-  widths.forEach((w, idx) => {
+  // 3. Formatting dimensions and styling
+  // Project(140), Task(340), Category(130), Priority(100), Status(130), Notes(300)
+  const stagingWidths = [140, 340, 130, 100, 130, 300];
+  stagingWidths.forEach((w, idx) => {
     stagingSheet.setColumnWidth(idx + 1, w);
   });
 
   stagingSheet.setRowHeights(2, 15, 42);
 
-  stagingSheet
-    .getRange('A2:B')
-    .setFontFamily('Roboto Mono')
-    .setFontWeight('bold')
-    .setHorizontalAlignment('center');
-
-  stagingSheet.getRange('C2:C').setHorizontalAlignment('center');
-  stagingSheet.getRange('D2:D').setHorizontalAlignment('left');
-  stagingSheet.getRange('E2:G').setHorizontalAlignment('center');
-  stagingSheet.getRange('H2:H').setHorizontalAlignment('left');
+  stagingSheet.getRange('A2:A').setHorizontalAlignment('center');
+  stagingSheet.getRange('B2:B').setHorizontalAlignment('left');
+  stagingSheet.getRange('C2:E').setHorizontalAlignment('center');
+  stagingSheet.getRange('F2:F').setHorizontalAlignment('left');
 
   stagingSheet
-    .getRange(1, 1, 20, CONFIG.HEADERS.length)
+    .getRange(1, 1, 20, STAGING_HEADERS.length)
     .setFontFamily('Arial')
+    .setFontSize(10)
     .setVerticalAlignment('middle')
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
 
-  formatBorders(stagingSheet.getRange(1, 1, 15, CONFIG.HEADERS.length));
+  formatBorders(stagingSheet.getRange(1, 1, 15, STAGING_HEADERS.length));
 
-  // 5. Setup dropdown validations for rows 2 through 30
-  setupDropdowns(stagingSheet);
+  // 4. Setup dropdown validations for the 6 staging columns
+  setupDropdownsForStagingSheet(stagingSheet);
 
-  // 6. Freeze header & trim excess
+  // 5. Freeze header & trim excess
   stagingSheet.setFrozenRows(1);
-  trimSheet(stagingSheet, 20, CONFIG.HEADERS.length);
+  trimSheet(stagingSheet, 20, STAGING_HEADERS.length);
 
-  // 7. Focus on first task cell (D2)
+  // 6. Focus on the first Task cell (B2)
   ss.setActiveSheet(stagingSheet);
-  stagingSheet.setActiveSelection('D2');
+  stagingSheet.setActiveSelection('B2');
 
-  // 8. Open the submission sidebar
+  // 7. Open the submission sidebar
   showTaskStagingSidebar(targetDate, stagingSheetName, targetMonthSheetName);
+}
+
+/**
+ * Applies dropdown validation rules for the staging sheet (6 columns).
+ * Col 1: Projects, Col 3: Categories, Col 4: Priorities, Col 5: Statuses
+ */
+function setupDropdownsForStagingSheet(sheet) {
+  const rowCount = Math.max(sheet.getLastRow() - 1, 20);
+  const ss = sheet.getParent();
+
+  const rules = {
+    1: createDropdownRule(ss, 'Projects'),
+    3: createDropdownRule(ss, 'Categories'),
+    4: createDropdownRule(ss, 'Priorities'),
+    5: createDropdownRule(ss, 'Statuses')
+  };
+
+  Object.entries(rules).forEach(([column, rule]) => {
+    if (rule) {
+      sheet
+        .getRange(2, Number(column), rowCount, 1)
+        .setDataValidation(rule);
+    }
+  });
 }
 
 /**
@@ -194,8 +222,8 @@ function showTaskStagingSidebar(targetDate, stagingSheetName, monthSheetName) {
 
 /**
  * Client-callable function: Saves tasks from the staging sheet into the month sheet,
- * inserts additional rows with the same date if more than one task was entered,
- * and deletes the staging sheet.
+ * populates Date and Day automatically, inserts additional rows with the same date
+ * if more than one task was entered, and deletes the staging sheet.
  *
  * @param {string} stagingSheetName
  * @returns {Object} Result object
@@ -216,28 +244,27 @@ function saveTasksFromStagingSheet(stagingSheetName) {
   if (lastRow < 2) {
     return {
       success: false,
-      message: 'No tasks entered. Please write at least one task before saving.'
+      message: 'No tasks entered. Please enter at least one task before saving.'
     };
   }
 
-  // Read entered tasks
+  // Read entered tasks from the 6 staging columns:
+  // [Project, Task, Category, Priority, Status, Notes]
   const rawData = tempSheet
-    .getRange(2, 1, lastRow - 1, CONFIG.HEADERS.length)
+    .getRange(2, 1, lastRow - 1, STAGING_HEADERS.length)
     .getValues();
 
   const enteredTasks = [];
   rawData.forEach(row => {
-    const taskDesc = row[3] ? String(row[3]).trim() : '';
+    const taskDesc = row[1] ? String(row[1]).trim() : '';
     if (taskDesc) {
       enteredTasks.push({
-        dateLabel: row[0],
-        dayLabel: row[1],
-        project: row[2] || '',
+        project: row[0] || '',
         task: taskDesc,
-        category: row[4] || '',
-        priority: row[5] || 'Medium',
-        status: row[6] || 'Pending',
-        notes: row[7] || ''
+        category: row[2] || '',
+        priority: row[3] || 'Medium',
+        status: row[4] || 'Pending',
+        notes: row[5] || ''
       });
     }
   });
@@ -249,11 +276,28 @@ function saveTasksFromStagingSheet(stagingSheetName) {
     };
   }
 
-  // Parse target date from sheet name (e.g. "08 September 2026")
-  const targetDate = resolveDateInput(stagingSheetName, '', timezone) || getToday();
-  const targetMonthSheetName = getMonthSheetName(targetDate, timezone);
+  // Resolve target date (via developer metadata or sheet name)
+  let targetDate = null;
+  try {
+    const metaList = tempSheet.getDeveloperMetadata();
+    const targetMeta = metaList.find(m => m.getKey() === 'TARGET_DATE');
+    if (targetMeta) {
+      const parts = targetMeta.getValue().split('-');
+      targetDate = new Date(
+        parseInt(parts[0], 10),
+        parseInt(parts[1], 10) - 1,
+        parseInt(parts[2], 10)
+      );
+    }
+  } catch (e) {}
 
+  if (!targetDate) {
+    targetDate = parseDateFromStagingSheetName(stagingSheetName) || getToday();
+  }
+
+  const targetMonthSheetName = getMonthSheetName(targetDate, timezone);
   let monthSheet = ss.getSheetByName(targetMonthSheetName);
+
   if (!monthSheet) {
     createCurrentMonthSheet();
     monthSheet = ss.getSheetByName(targetMonthSheetName);
@@ -290,7 +334,7 @@ function saveTasksFromStagingSheet(stagingSheetName) {
     let insertAfterRow = matchingRowIndices[matchingRowIndices.length - 1];
 
     if (isFirstRowEmpty) {
-      // 1. Fill the first task into the existing row for this date
+      // 1. Fill first task into the existing row for this date
       const t1 = enteredTasks[0];
       monthSheet.getRange(firstRowIndex, 3, 1, 6).setValues([[
         t1.project,
@@ -305,7 +349,7 @@ function saveTasksFromStagingSheet(stagingSheetName) {
       insertAfterRow = firstRowIndex;
     }
 
-    // 2. If there are more tasks for this day, insert new row(s) after with the same date
+    // 2. If there are more tasks for this day, insert new row(s) after with the SAME date and day
     const dateVal = monthSheet.getRange(firstRowIndex, 1).getValue();
     const dayVal = monthSheet.getRange(firstRowIndex, 2).getValue();
 
@@ -389,6 +433,29 @@ function saveTasksFromStagingSheet(stagingSheetName) {
 }
 
 /**
+ * Parses target date from staging sheet name (e.g. "08 September 2026").
+ */
+function parseDateFromStagingSheetName(sheetName) {
+  if (!sheetName) return null;
+
+  const match = sheetName.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (match) {
+    const day = parseInt(match[1], 10);
+    const monthName = match[2].toLowerCase();
+    const year = parseInt(match[3], 10);
+    const monthNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december'
+    ];
+    const monthIndex = monthNames.indexOf(monthName);
+    if (monthIndex !== -1) {
+      return new Date(year, monthIndex, day);
+    }
+  }
+  return null;
+}
+
+/**
  * Client-callable function: Discards and deletes the temporary staging sheet.
  */
 function cancelTaskStagingSheet(stagingSheetName) {
@@ -403,7 +470,7 @@ function cancelTaskStagingSheet(stagingSheetName) {
 }
 
 /**
- * Applies dropdown validation rules for an entire sheet.
+ * Applies dropdown validation rules for the 8-column month sheet.
  */
 function setupDropdowns(sheet) {
   const rowCount = Math.max(sheet.getLastRow() - 1, 20);
@@ -426,7 +493,7 @@ function setupDropdowns(sheet) {
 }
 
 /**
- * Applies dropdown validation rules for a single newly inserted row.
+ * Applies dropdown validation rules for a single newly inserted row in the month sheet.
  */
 function setupDropdownsForRow(sheet, row) {
   const ss = sheet.getParent();
@@ -676,10 +743,10 @@ function getTaskSidebarHtml(formattedDate, shortDate, stagingSheetName, monthShe
   <div class="instructions">
     <strong>How it works:</strong>
     <ol>
-      <li>Enter your tasks in the sheet on the left.</li>
+      <li>Enter your tasks in the sheet on the left (Project, Task, Category, Priority, Status, Notes).</li>
+      <li>Date and Day are handled automatically.</li>
       <li>Fill as many rows as needed for this date.</li>
-      <li>Dropdowns are configured for Project, Category, Priority, and Status.</li>
-      <li>Click <strong>Save Tasks</strong> below when finished.</li>
+      <li>Click <strong>Save Tasks to Month Sheet</strong> below when finished.</li>
     </ol>
   </div>
 

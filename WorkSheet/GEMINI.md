@@ -42,7 +42,9 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - Updated `Menu.gs` to only have the two requested options: `Generate DSR for today` and `Generate DSR for selected date in the month`.
 4. **Task Staging & Insertion Workflow**:
    - Updated `Tasks` menu to strictly have two options: `Fill task for today` and `Fill task for selected date in the current month`.
-   - Creates a temporary staging sheet named `Date Month Year` (e.g. `08 September 2026`) for entering multiple tasks.
+   - Prompts strictly for a day number (`1–30` or `1–31`) based on the current month's days.
+   - Creates a temporary staging sheet named `Date Month Year` (e.g. `08 September 2026`) containing only task fields (`Project`, `Task`, `Category`, `Priority`, `Status`, `Notes`), omitting redundant Date and Day columns.
+   - Automatically populates Date and Day upon saving to the month sheet.
    - Supports inserting new row(s) after the date with the same date when multiple tasks are added.
    - Automatically deletes the staging sheet and refocuses the month sheet after saving.
 

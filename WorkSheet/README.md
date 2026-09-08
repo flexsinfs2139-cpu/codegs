@@ -118,13 +118,14 @@ WorkSheet/
 ### 3. Dynamic Task Management
 - **Fill Task for Today**:
   - Menu: **Tasks** > **Fill task for today**.
-  - Opens/creates a staging sheet named `Date Month Year` (e.g. `08 September 2026`) with prefilled dates, headers, formatting, and dropdown validations.
+  - Automatically targets today's date and creates a staging sheet named `Date Month Year` (e.g. `08 September 2026`).
+  - The staging sheet contains only the task input fields (`Project`, `Task`, `Category`, `Priority`, `Status`, `Notes`), eliminating redundant Date and Day columns.
   - Launches a side panel allowing the user to enter multiple tasks for the day.
   - Clicking **Save Tasks to Month Sheet** writes the tasks into the monthly sheet (updating the existing date row and inserting new rows after it for additional tasks with the same date), then deletes the staging sheet.
 - **Fill Task for Selected Date in the Current Month**:
   - Menu: **Tasks** > **Fill task for selected date in the current month**.
-  - Asks the user for the day of the month (`1–31`) or date (`DD/MM/YYYY`).
-  - Creates the staging sheet for that date, enables multi-task entry, transfers the rows, and cleans up the staging sheet.
+  - Asks only for a day number between `1` and the total days in the current month (e.g. `1–30` or `1–31`).
+  - Creates the staging sheet for that day, enables multi-task entry, transfers the rows, and cleans up the staging sheet.
 
 ### 4. Formatting & Visual Hierarchy
 - **Header**: Background color `#d9ead3` (soft green), bold Arial text, centered, height 28px.
