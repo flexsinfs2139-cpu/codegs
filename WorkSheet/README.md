@@ -16,7 +16,7 @@ An automated, modular Google Apps Script solution designed to manage daily tasks
   - [4. Formatting & Visual Hierarchy](#4-formatting--visual-hierarchy)
   - [5. Conditional Formatting & Weekend Highlighting](#5-conditional-formatting--weekend-highlighting)
   - [6. Custom Toolbar Menus](#6-custom-toolbar-menus)
-- [Configuration Guide (`Config.gs`)](#configuration-guide-configgs)
+- [Configuration Guide (`01_Config.gs`)](#configuration-guide-01_configgs)
 - [Workflow & Call Hierarchy](#workflow--call-hierarchy)
 - [Developer Notes & Observations](#developer-notes--observations)
 
@@ -30,38 +30,38 @@ The **WorkSheet** project transforms a Google Sheet into an organized work-track
 
 ## Architecture & File Structure
 
-The project is structured into 10 modular `.gs` files:
+The project is structured into 11 modular `.gs` files:
 
 ```
 WorkSheet/
-├── Config.gs                 # Central configuration for headers, lists, colors, dimensions
-├── Code.gs                   # High-level entry points and orchestration routines
-├── MonthSheet.gs             # Monthly sheet creation, day row generation, and layout assembly
-├── Tasks.gs                  # Task-level operations (row insertion, dropdown validation, task clearing)
-├── Lists.gs                  # Validation reference sheet generator, named ranges, sheet protection
-├── Formatting.gs             # Visual layout, font hierarchy, column widths, row heights, borders
-├── ConditionalFormatting.gs  # Priority, status, and weekend row conditional formatting rules
-├── Menu.gs                   # Custom UI menus registered via `onOpen()`
-├── DSR.gs                    # Daily Status Report generator, parser, and interactive modal dialog
-├── CalendarPicker.gs         # Interactive visual calendar date picker engine for Tasks and DSR
-└── Utils.gs                  # Helper utilities for timezone, dates, sheet trimming, and ranges
+├── 00_Code.gs                  # High-level entry points and orchestration routines
+├── 01_Config.gs                # Central configuration for headers, lists, colors, dimensions
+├── 02_Utils.gs                 # Helper utilities for timezone, dates, sheet trimming, and ranges
+├── 03_Lists.gs                 # Validation reference sheet generator, named ranges, sheet protection
+├── 04_MonthSheet.gs            # Monthly sheet creation, day row generation, and layout assembly
+├── 05_Tasks.gs                 # Task-level operations (row insertion, dropdown validation, task clearing)
+├── 06_Formatting.gs            # Visual layout, font hierarchy, column widths, row heights, borders
+├── 07_ConditionalFormatting.gs # Priority, status, and weekend row conditional formatting rules
+├── 08_Menu.gs                  # Custom UI menus registered via `onOpen()`
+├── 09_DSR.gs                   # Daily Status Report generator, parser, and interactive modal dialog
+└── 10_CalendarPicker.gs        # Interactive visual calendar date picker engine for Tasks and DSR
 ```
 
 ### File Responsibilities
 
 | File | Primary Functions | Description |
 | :--- | :--- | :--- |
-| **`Config.gs`** | `CONFIG` object | Stores global variables, header names, default tasks per day, default colors, and array values for Projects, Categories, Priorities, and Statuses. |
-| **`Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` | Serves as the operational entry point coordinating setup across modules. |
-| **`MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
-| **`Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
-| **`Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
-| **`Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for dates/days, `Arial` for content), alignments, column widths, row heights, and borders. |
-| **`ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting` | Creates color-coded conditional formatting rules for Statuses (In Progress, Completed, Blocked, Cancelled), Priorities (Urgent, High, Medium), and weekend rows (Saturday, Sunday). |
-| **`Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, and `DSR`. |
-| **`DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
-| **`CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` | Provides an interactive monthly visual calendar widget to visually select dates for Tasks and DSR workflows without text prompts. |
-| **`Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Common helper methods for trimming extra grid cells and fetching sheet context with proper timezone handling. |
+| **`00_Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` | Serves as the operational entry point coordinating setup across modules. |
+| **`01_Config.gs`** | `CONFIG` object | Stores global variables, header names, default tasks per day, default colors, and array values for Projects, Categories, Priorities, and Statuses. |
+| **`02_Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Common helper methods for trimming extra grid cells and fetching sheet context with proper timezone handling. |
+| **`03_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
+| **`04_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
+| **`05_Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
+| **`06_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for dates/days, `Arial` for content), alignments, column widths, row heights, and borders. |
+| **`07_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting` | Creates color-coded conditional formatting rules for Statuses (In Progress, Completed, Blocked, Cancelled), Priorities (Urgent, High, Medium), and weekend rows (Saturday, Sunday). |
+| **`08_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, and `DSR`. |
+| **`09_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
+| **`10_CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` | Provides an interactive monthly visual calendar widget to visually select dates for Tasks and DSR workflows without text prompts. |
 
 ---
 
@@ -71,16 +71,18 @@ WorkSheet/
 1. Create or open an existing **Google Spreadsheet**.
 2. Go to **Extensions** > **Apps Script** in the top menu.
 3. Rename the Apps Script project to `WorkSheet`.
-4. Copy all 9 `.gs` files into the Apps Script editor with their matching names:
-   - `Config.gs`
-   - `Code.gs`
-   - `MonthSheet.gs`
-   - `Tasks.gs`
-   - `Lists.gs`
-   - `Formatting.gs`
-   - `ConditionalFormatting.gs`
-   - `Menu.gs`
-   - `Utils.gs`
+4. Copy all 11 `.gs` files into the Apps Script editor with their matching names:
+   - `00_Code.gs`
+   - `01_Config.gs`
+   - `02_Utils.gs`
+   - `03_Lists.gs`
+   - `04_MonthSheet.gs`
+   - `05_Tasks.gs`
+   - `06_Formatting.gs`
+   - `07_ConditionalFormatting.gs`
+   - `08_Menu.gs`
+   - `09_DSR.gs`
+   - `10_CalendarPicker.gs`
 
 *(Alternatively, use [Google Clasp](https://github.com/google/clasp) to push the local files directly to your Apps Script container).*
 
@@ -169,9 +171,9 @@ WorkSheet/
 
 ---
 
-## Configuration Guide (`Config.gs`)
+## Configuration Guide (`01_Config.gs`)
 
-Modify `Config.gs` to tailor the tracker to your organization's workflow:
+Modify `01_Config.gs` to tailor the tracker to your organization's workflow:
 
 ```javascript
 const CONFIG = {
@@ -241,6 +243,6 @@ flowchart TD
 ## Developer Notes & Observations
 
 1. **Date Format Alignment**:
-   `MonthSheet.gs` formats dates as `'MMdd'` (e.g., `0908`), whereas `addTaskRow()` in `Tasks.gs` formats dates as `'ddMMM'` (e.g., `08SEP`). For visual consistency across rows, it is recommended to standardize on a single date format across both files.
+   `04_MonthSheet.gs` formats dates as `'MMdd'` (e.g., `0908`), whereas `addTaskRow()` in `05_Tasks.gs` formats dates as `'ddMMM'` (e.g., `08SEP`). For visual consistency across rows, it is recommended to standardize on a single date format across both files.
 2. **Column Index Flexibility**:
-   Validation rules in `Tasks.gs` map hardcoded column indices (3, 5, 6, 7). If headers in `Config.gs` are reordered or added, ensure column indices in `Tasks.gs`, `Formatting.gs`, and `ConditionalFormatting.gs` are synchronized.
+   Validation rules in `05_Tasks.gs` map hardcoded column indices (3, 5, 6, 7). If headers in `01_Config.gs` are reordered or added, ensure column indices in `05_Tasks.gs`, `06_Formatting.gs`, and `07_ConditionalFormatting.gs` are synchronized.
