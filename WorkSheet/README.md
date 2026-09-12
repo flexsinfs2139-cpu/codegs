@@ -43,6 +43,7 @@ WorkSheet/
 ├── ConditionalFormatting.gs  # Priority, status, and weekend row conditional formatting rules
 ├── Menu.gs                   # Custom UI menus registered via `onOpen()`
 ├── DSR.gs                    # Daily Status Report generator, parser, and interactive modal dialog
+├── CalendarPicker.gs         # Interactive visual calendar date picker engine for Tasks and DSR
 └── Utils.gs                  # Helper utilities for timezone, dates, sheet trimming, and ranges
 ```
 
@@ -58,7 +59,8 @@ WorkSheet/
 | **`Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for dates/days, `Arial` for content), alignments, column widths, row heights, and borders. |
 | **`ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting` | Creates color-coded conditional formatting rules for Statuses (In Progress, Completed, Blocked, Cancelled), Priorities (Urgent, High, Medium), and weekend rows (Saturday, Sunday). |
 | **`Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, and `DSR`. |
-| **`DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with copy, save, and download actions. |
+| **`DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
+| **`CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` | Provides an interactive monthly visual calendar widget to visually select dates for Tasks and DSR workflows without text prompts. |
 | **`Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Common helper methods for trimming extra grid cells and fetching sheet context with proper timezone handling. |
 
 ---
@@ -129,8 +131,8 @@ WorkSheet/
   - The script automatically writes the first task into the existing date row and inserts additional rows below it with the same Date and Day, complete with borders, fonts, and dropdown validations.
 - **Fill Task for Selected Date in the Current Month**:
   - Menu: **Tasks** > **Fill task for selected date in the current month**.
-  - Prompts for a day number (`1–30` or `1–31`) and opens the same streamlined task entry dialog for that target date.
-  - You can also switch days directly inside the dialog via the day selector.
+  - Opens a visual, interactive monthly calendar picker where you can click any day (or double-click to proceed immediately) to enter tasks for that date.
+  - You can also switch days directly inside the Task Entry dialog via the embedded calendar date picker.
 
 ### 4. Formatting & Visual Hierarchy
 - **Header**: Background color `#d9ead3` (soft green), bold Arial text, centered, height 28px.
@@ -161,9 +163,9 @@ WorkSheet/
 | **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days, default Pending statuses, and styling. |
 | **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
 | **Tasks** | Fill task for today | `fillTaskForToday` | Opens the fast modal dialog to enter single/multiple tasks for today by project, category, and priority. |
-| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Opens the modal dialog for a selected date in the month to enter tasks with automatic Pending status. |
+| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Opens the visual interactive calendar to choose any date, then opens the task entry dialog with automatic Pending status. |
 | **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
-| **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Generates the status report for a selected row's date or user-entered date in a modal dialog. |
+| **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Opens the visual interactive calendar to choose any date and generate the DSR, with in-modal date switching support. |
 
 ---
 

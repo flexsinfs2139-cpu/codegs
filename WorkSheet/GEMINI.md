@@ -26,6 +26,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | [`ConditionalFormatting.gs`](./ConditionalFormatting.gs) | Dynamic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
 | [`Menu.gs`](./Menu.gs) | Toolbar UI menus | `onOpen` (creates `Month Sheet`, `Setup`, `Tasks`, `DSR`) |
 | [`DSR.gs`](./DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
+| [`CalendarPicker.gs`](./CalendarPicker.gs) | Visual calendar date picker | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
 | [`Utils.gs`](./Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
 | [`README.md`](./README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
 
@@ -52,6 +53,10 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 5. **Resolved Architectural Review Items**:
    - Date Format Divergence resolved: Added unified `CONFIG.DATE_FORMAT: 'MMdd'`.
    - `clearTasks()` Target Safety resolved: Clears columns 3-7 on month sheets and is blocked on the `Lists` sheet.
+6. **Visual Calendar Date Picker**:
+   - Implemented `CalendarPicker.gs` providing an interactive monthly calendar widget for choosing dates apart from today.
+   - Connected to both `Tasks -> Fill task for selected date in the current month` and `DSR -> Generate DSR for selected date in the month`.
+   - Added native calendar datepicker input directly into the Task Entry modal and the DSR modal (allowing real-time report refreshing across dates).
 
 ---
 

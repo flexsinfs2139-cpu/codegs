@@ -13,40 +13,25 @@ function fillTaskForToday() {
 
 /**
  * Menu Action: Fill task for selected date in the current month.
- * Prompts for the day number and opens the task entry dialog.
+ * Opens an interactive visual calendar picker to choose the target date.
  */
 function fillTaskForSelectedDate() {
-  const today = getToday();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
-  const currentDay = today.getDate();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet();
+  const timezone = getTimezone();
 
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt(
-    'Fill Task for Selected Date',
-    `Enter day of current month (1–${daysInMonth}) [Default: ${currentDay}]:`,
-    ui.ButtonSet.OK_CANCEL
-  );
+  let initialDate = getToday();
+  const activeRow = sheet.getActiveCell().getRow();
 
-  if (response.getSelectedButton() !== ui.Button.OK) {
-    return;
+  if (activeRow > 1 && sheet.getName() !== CONFIG.LISTS_SHEET_NAME) {
+    const cellValue = sheet.getRange(activeRow, 1).getValue();
+    const parsed = parseDateFromCell(cellValue, sheet.getName(), timezone);
+    if (parsed) {
+      initialDate = parsed;
+    }
   }
 
-  const input = response.getResponseText().trim() || String(currentDay);
-  const dayNumber = parseInt(input, 10);
-
-  if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > daysInMonth) {
-    ui.alert(
-      'Invalid Day Number',
-      `Please enter a valid day between 1 and ${daysInMonth}.`,
-      ui.ButtonSet.OK
-    );
-    return;
-  }
-
-  const targetDate = new Date(currentYear, currentMonth, dayNumber);
-  openTaskDialog(targetDate);
+  openCalendarPicker('tasks', initialDate);
 }
 
 /**
@@ -84,6 +69,7 @@ function openTaskDialog(targetDate) {
     daysInMonth: daysInMonth,
     formattedDate: Utilities.formatDate(date, timezone, 'EEEE, dd MMMM yyyy'),
     shortDate: Utilities.formatDate(date, timezone, 'dd/MM/yyyy'),
+    isoDate: Utilities.formatDate(date, timezone, 'yyyy-MM-dd'),
     monthSheetName: monthSheetName
   };
 
@@ -487,7 +473,7 @@ function getTaskDialogHtml(dateInfo, configLists) {
       color: #475569;
     }
 
-    .day-selector {
+    .date-picker-input {
       padding: 4px 8px;
       font-size: 12px;
       font-weight: 600;
@@ -497,6 +483,11 @@ function getTaskDialogHtml(dateInfo, configLists) {
       color: #0f172a;
       outline: none;
       cursor: pointer;
+    }
+
+    .date-picker-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
 
     .date-display-text {
@@ -696,11 +687,11 @@ function getTaskDialogHtml(dateInfo, configLists) {
       <span class="badge-tab" id="monthBadge"></span>
     </div>
 
-    <!-- Date Row -->
+    <!-- Date Row with Calendar Picker -->
     <div class="date-row">
-      <span class="date-label">Day:</span>
-      <select id="daySelect" class="day-selector" onchange="handleDayChange()"></select>
-      <span id="dateDisplay" class="date-display-text"></span>
+      <span class="date-label">📅 Date:</span>
+      <input type="date" id="dateInput" class="date-picker-input" value="${dateInfo.isoDate}" onchange="handleDateChange()">
+      <span id="dateDisplay" class="date-display-text">${dateInfo.formattedDate}</span>
     </div>
 
     <!-- Form Controls for Project, Category, Priority -->
@@ -767,39 +758,28 @@ function getTaskDialogHtml(dateInfo, configLists) {
 
     // Initialize UI on load
     window.onload = function() {
-      initDateSelectors();
       initDropdowns();
       document.getElementById('monthBadge').innerText = dateInfo.monthSheetName;
       document.getElementById('tasksInput').focus();
     };
 
-    function initDateSelectors() {
-      const daySelect = document.getElementById('daySelect');
-      daySelect.innerHTML = '';
+    function handleDateChange() {
+      const inputVal = document.getElementById('dateInput').value;
+      if (!inputVal) return;
+      const parts = inputVal.split('-');
+      dateInfo.year = parseInt(parts[0], 10);
+      dateInfo.monthIndex = parseInt(parts[1], 10) - 1;
+      dateInfo.day = parseInt(parts[2], 10);
 
-      for (let d = 1; d <= dateInfo.daysInMonth; d++) {
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.text = (d < 10 ? '0' : '') + d;
-        if (d === dateInfo.day) {
-          opt.selected = true;
-        }
-        daySelect.appendChild(opt);
-      }
-
-      updateDateDisplay();
-    }
-
-    function handleDayChange() {
-      const daySelect = document.getElementById('daySelect');
-      dateInfo.day = parseInt(daySelect.value, 10);
-      updateDateDisplay();
-    }
-
-    function updateDateDisplay() {
       const d = new Date(dateInfo.year, dateInfo.monthIndex, dateInfo.day);
       const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
       document.getElementById('dateDisplay').innerText = d.toLocaleDateString('en-GB', options);
+
+      // Update month badge e.g. "SEP26"
+      const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const yy = String(dateInfo.year).slice(-2);
+      dateInfo.monthSheetName = monthNames[dateInfo.monthIndex] + yy;
+      document.getElementById('monthBadge').innerText = dateInfo.monthSheetName;
     }
 
     function initDropdowns() {

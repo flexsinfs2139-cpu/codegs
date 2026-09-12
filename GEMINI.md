@@ -26,6 +26,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | [`WorkSheet/ConditionalFormatting.gs`](./WorkSheet/ConditionalFormatting.gs) | Dynamic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
 | [`WorkSheet/Menu.gs`](./WorkSheet/Menu.gs) | Toolbar UI menus | `onOpen` (creates `Month Sheet`, `Setup`, `Tasks`, `DSR`) |
 | [`WorkSheet/DSR.gs`](./WorkSheet/DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
+| [`WorkSheet/CalendarPicker.gs`](./WorkSheet/CalendarPicker.gs) | Visual calendar date picker | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
 | [`WorkSheet/Utils.gs`](./WorkSheet/Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
 | [`WorkSheet/README.md`](./WorkSheet/README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
 
@@ -52,6 +53,10 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 5. **Resolved Architectural Review Items**:
    - Date Format Divergence resolved: Added unified `CONFIG.DATE_FORMAT: 'MMdd'`.
    - `clearTasks()` Target Safety resolved: Clears columns 3-7 on month sheets and is blocked on the `Lists` sheet.
+6. **Visual Calendar Date Picker**:
+   - Implemented `CalendarPicker.gs` providing an interactive monthly calendar widget for choosing dates apart from today.
+   - Connected to both `Tasks -> Fill task for selected date in the current month` and `DSR -> Generate DSR for selected date in the month`.
+   - Added native calendar datepicker input directly into the Task Entry modal and the DSR modal (allowing real-time report refreshing across dates).
 
 ---
 

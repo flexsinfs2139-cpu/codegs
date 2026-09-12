@@ -13,50 +13,42 @@ function generateDSRForToday() {
 
 /**
  * Generates and displays the Daily Status Report for a selected date in the month.
- * Automatically suggests date if a row in the month sheet is highlighted,
- * or prompts the user to enter/confirm the date.
+ * Opens an interactive visual calendar picker to choose the target date.
  */
 function generateDSRForSelectedDate() {
   const ss = getSpreadsheet();
   const sheet = ss.getActiveSheet();
   const timezone = getTimezone();
-  const ui = SpreadsheetApp.getUi();
 
-  let suggestedDate = null;
+  let initialDate = getToday();
   const activeRow = sheet.getActiveCell().getRow();
 
   if (activeRow > 1 && sheet.getName() !== CONFIG.LISTS_SHEET_NAME) {
     const cellValue = sheet.getRange(activeRow, 1).getValue();
-    suggestedDate = parseDateFromCell(cellValue, sheet.getName(), timezone);
+    const parsed = parseDateFromCell(cellValue, sheet.getName(), timezone);
+    if (parsed) {
+      initialDate = parsed;
+    }
   }
 
-  const defaultDateStr = suggestedDate
-    ? Utilities.formatDate(suggestedDate, timezone, 'dd/MM/yyyy')
-    : Utilities.formatDate(getToday(), timezone, 'dd/MM/yyyy');
+  openCalendarPicker('dsr', initialDate);
+}
 
-  const response = ui.prompt(
-    'Generate DSR for Selected Date',
-    `Enter date (DD/MM/YYYY or day 1–31) [Default: ${defaultDateStr}]:`,
-    ui.ButtonSet.OK_CANCEL
+/**
+ * Client-callable function: Compiles DSR data for a selected date.
+ * Allows switching dates dynamically inside the open DSR dialog.
+ *
+ * @param {string} dateStr - 'YYYY-MM-DD'
+ * @returns {Object} Compiled DSR data
+ */
+function getDSRDataForDate(dateStr) {
+  const parts = dateStr.split('-');
+  const targetDate = new Date(
+    parseInt(parts[0], 10),
+    parseInt(parts[1], 10) - 1,
+    parseInt(parts[2], 10)
   );
-
-  if (response.getSelectedButton() !== ui.Button.OK) {
-    return;
-  }
-
-  const input = response.getResponseText().trim() || defaultDateStr;
-  const targetDate = resolveDateInput(input, sheet.getName(), timezone);
-
-  if (!targetDate) {
-    ui.alert(
-      'Invalid Date',
-      'Please enter a valid date (DD/MM/YYYY) or day of the month (1–31).',
-      ui.ButtonSet.OK
-    );
-    return;
-  }
-
-  showDSRDialog(targetDate, false);
+  return compileDSRData(targetDate, false);
 }
 
 /**
@@ -237,8 +229,11 @@ function compileDSRData(targetDate, isToday) {
     reportText = blocks.join('\n\n');
   }
 
+  const isoDate = Utilities.formatDate(targetDate, timezone, 'yyyy-MM-dd');
+
   return {
     formattedDate: formattedDate,
+    isoDate: isoDate,
     isToday: isToday,
     totalTasks: totalTasks,
     totalProjects: totalProjects,
@@ -390,6 +385,31 @@ function getDSRDialogHtml(dsrData, isToday) {
       margin-top: 2px;
     }
 
+    .dsr-date-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .dsr-date-input {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 3px 8px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .dsr-date-input:focus {
+      border-color: #5850ec;
+      box-shadow: 0 0 0 2px rgba(88, 80, 236, 0.15);
+    }
+
     .dsr-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -516,9 +536,13 @@ function getDSRDialogHtml(dsrData, isToday) {
       <div class="dsr-title-row">
         <span class="dsr-icon">📋</span>
         <span class="dsr-title">Daily Status Report</span>
-        <span class="dsr-badge">${badgeText}</span>
+        <span class="dsr-badge" id="dsrBadge">${badgeText}</span>
       </div>
-      <div class="dsr-subtitle">${subtitle}</div>
+      <div class="dsr-date-nav">
+        <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Date:</span>
+        <input type="date" id="dsrDateInput" class="dsr-date-input" value="${dsrData.isoDate}" onchange="changeDSRDate(this.value)">
+        <span class="dsr-subtitle" id="dsrSubtitle">${dsrData.totalTasks} task(s) across ${dsrData.totalProjects} project(s)</span>
+      </div>
     </div>
 
     <!-- Preformatted Report Box -->
@@ -549,9 +573,33 @@ function getDSRDialogHtml(dsrData, isToday) {
   </div>
 
   <script>
-    const reportText = ${jsonReportText};
-    const formattedDate = ${jsonFormattedDate};
-    const dsrPayload = ${jsonPayload};
+    let currentPayload = ${jsonPayload};
+    let currentFormattedDate = ${jsonFormattedDate};
+
+    function changeDSRDate(newDateStr) {
+      if (!newDateStr) return;
+      const textBox = document.getElementById('dsrText');
+      const subTitle = document.getElementById('dsrSubtitle');
+      const badge = document.getElementById('dsrBadge');
+
+      textBox.style.opacity = '0.4';
+
+      google.script.run
+        .withSuccessHandler(function(newData) {
+          textBox.style.opacity = '1';
+          if (!newData) return;
+          textBox.innerText = newData.reportText;
+          subTitle.innerText = newData.totalTasks + ' task(s) across ' + newData.totalProjects + ' project(s)';
+          badge.innerText = newData.formattedDate;
+          currentPayload = newData;
+          currentFormattedDate = newData.formattedDate;
+        })
+        .withFailureHandler(function(err) {
+          textBox.style.opacity = '1';
+          alert('Could not load DSR for ' + newDateStr + ': ' + (err.message || err));
+        })
+        .getDSRDataForDate(newDateStr);
+    }
 
     function copyToClipboard() {
       const text = document.getElementById('dsrText').innerText;
@@ -595,7 +643,7 @@ function getDSRDialogHtml(dsrData, isToday) {
 
     function downloadTxt() {
       const text = document.getElementById('dsrText').innerText;
-      const cleanDate = formattedDate.replace(/[\/\\:]/g, '-');
+      const cleanDate = currentFormattedDate.replace(/[\/\\:]/g, '-');
       const filename = 'DSR_' + cleanDate + '.txt';
 
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -632,7 +680,7 @@ function getDSRDialogHtml(dsrData, isToday) {
           btn.innerHTML = '❌ Error';
           alert('Could not save DSR: ' + (err.message || err));
         })
-        .saveDSRToSheet(dsrPayload);
+        .saveDSRToSheet(currentPayload);
     }
   </script>
 </body>
