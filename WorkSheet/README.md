@@ -103,7 +103,8 @@ WorkSheet/
   - Checks if the sheet already exists to prevent accidental overwriting.
   - Automatically ensures the `Lists` sheet exists before generating month data.
   - Creates rows for all days in the month (e.g., 28 to 31 days) with `CONFIG.DEFAULT_TASKS_PER_DAY` tasks per day.
-  - Trims all unused columns (beyond column H) and unused rows to maintain high sheet performance.
+  - Default status for all rows is set to `Pending`. The `Notes` column is omitted for maximum speed and simplicity.
+  - Trims all unused columns (beyond column G) and unused rows to maintain high sheet performance.
   - Freezes the header row.
 
 ### 2. Centralized Lists & Named Ranges
@@ -115,25 +116,28 @@ WorkSheet/
   - `Statuses` (Column D)
 - **Protection**: The `Lists` sheet is automatically trimmed to fit exact list items and locked against editing to prevent accidental alterations.
 
-### 3. Dynamic Task Management
+### 3. Dynamic Task Management & Quick Entry
 - **Fill Task for Today**:
   - Menu: **Tasks** > **Fill task for today**.
-  - Automatically targets today's date and creates a staging sheet named `Date Month Year` (e.g. `08 September 2026`).
-  - The staging sheet contains only the task input fields (`Project`, `Task`, `Category`, `Priority`, `Status`, `Notes`), eliminating redundant Date and Day columns.
-  - Launches a side panel allowing the user to enter multiple tasks for the day.
-  - Clicking **Save Tasks to Month Sheet** writes the tasks into the monthly sheet (updating the existing date row and inserting new rows after it for additional tasks with the same date), then deletes the staging sheet.
+  - Opens a streamlined, interactive modal dialog pre-set to today's date.
+  - Select your **Project**, **Category**, and **Priority** once.
+  - Status is automatically **Pending** (no input needed).
+  - Notes are not requested, keeping input friction to zero.
+  - Enter or paste one or multiple tasks in the textarea (supports bullet points, dashes, or numbered lists).
+  - Use **Ctrl + Enter** to quickly submit.
+  - Click **+ Add & Next Project** to save tasks and immediately log tasks for another project without closing the dialog.
+  - The script automatically writes the first task into the existing date row and inserts additional rows below it with the same Date and Day, complete with borders, fonts, and dropdown validations.
 - **Fill Task for Selected Date in the Current Month**:
   - Menu: **Tasks** > **Fill task for selected date in the current month**.
-  - Asks only for a day number between `1` and the total days in the current month (e.g. `1–30` or `1–31`).
-  - Creates the staging sheet for that day, enables multi-task entry, transfers the rows, and cleans up the staging sheet.
+  - Prompts for a day number (`1–30` or `1–31`) and opens the same streamlined task entry dialog for that target date.
+  - You can also switch days directly inside the dialog via the day selector.
 
 ### 4. Formatting & Visual Hierarchy
 - **Header**: Background color `#d9ead3` (soft green), bold Arial text, centered, height 28px.
 - **Date & Day (Columns A & B)**: Monospaced `Roboto Mono`, bold, centered.
 - **Project (Column C)**: Centered, width 130px.
-- **Task (Column D)**: Left-aligned, width 315px, text wrapped.
+- **Task (Column D)**: Left-aligned, width 340px, text wrapped.
 - **Category, Priority, Status (Columns E, F, G)**: Centered, data-validation dropdowns.
-- **Notes (Column H)**: Left-aligned, width 300px, text wrapped.
 - **Data Rows**: Uniform row height of 42px with `#d9d9d9` solid borders.
 
 ### 5. Conditional Formatting & Weekend Highlighting
@@ -146,7 +150,7 @@ WorkSheet/
   - `Completed`: Green text (`#008000`) on soft green background (`#d9ead3`)
   - `Blocked`: Red text (`#cc0000`) on soft red background (`#f4cccc`)
   - `Cancelled`: Grey text (`#666666`) on light grey background (`#eeeeee`)
-- **Weekend Rows (Columns A to H)**:
+- **Weekend Rows (Columns A to G)**:
   - `Saturday`: Grey text (`#6b7280`) on light grey background (`#f3f4f6`)
   - `Sunday`: Red text (`#cc0000`) on soft red background (`#fce8e6`)
 
@@ -154,10 +158,10 @@ WorkSheet/
 
 | Menu | Item | Target Function | Description |
 | :--- | :--- | :--- | :--- |
-| **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days and styling. |
+| **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days, default Pending statuses, and styling. |
 | **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
-| **Tasks** | Fill task for today | `fillTaskForToday` | Creates a temporary `Date Month Year` staging sheet to add multiple tasks for today, then merges them into the month sheet and deletes the staging sheet. |
-| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Asks the user for a date in the current month, creates the staging sheet, merges tasks, and cleans up. |
+| **Tasks** | Fill task for today | `fillTaskForToday` | Opens the fast modal dialog to enter single/multiple tasks for today by project, category, and priority. |
+| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Opens the modal dialog for a selected date in the month to enter tasks with automatic Pending status. |
 | **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
 | **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Generates the status report for a selected row's date or user-entered date in a modal dialog. |
 
@@ -170,11 +174,12 @@ Modify `Config.gs` to tailor the tracker to your organization's workflow:
 ```javascript
 const CONFIG = {
   HEADER_ROW: 1,
+  DATE_FORMAT: 'MMdd',
   DEFAULT_TASKS_PER_DAY: 1,      // Number of rows generated per day
   LISTS_SHEET_NAME: 'Lists',     // Name of reference sheet
 
   HEADERS: [
-    'Date', 'Day', 'Project', 'Task', 'Category', 'Priority', 'Status', 'Notes'
+    'Date', 'Day', 'Project', 'Task', 'Category', 'Priority', 'Status'
   ],
 
   COLORS: {

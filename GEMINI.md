@@ -39,22 +39,19 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 3. **DSR Generation & Modal Dialog**:
    - Implemented `DSR.gs` to extract tasks by date, categorize by project into Tasks Completed, Work in Progress, Blockers/Issues, and Plan for Next Working Day.
    - Built styled HTML modal dialog matching the user's UI specification (`Copy to Clipboard`, `Save to Sheet`, `Download .txt`, `Close`).
-   - Updated `Menu.gs` to only have the two requested options: `Generate DSR for today` and `Generate DSR for selected date in the month`.
-4. **Task Staging & Insertion Workflow**:
-   - Updated `Tasks` menu to strictly have two options: `Fill task for today` and `Fill task for selected date in the current month`.
-   - Prompts strictly for a day number (`1–30` or `1–31`) based on the current month's days.
-   - Creates a temporary staging sheet named `Date Month Year` (e.g. `08 September 2026`) containing only task fields (`Project`, `Task`, `Category`, `Priority`, `Status`, `Notes`), omitting redundant Date and Day columns.
-   - Automatically populates Date and Day upon saving to the month sheet.
-   - Supports inserting new row(s) after the date with the same date when multiple tasks are added.
-   - Automatically deletes the staging sheet and refocuses the month sheet after saving.
-
-### Outstanding Review Findings & Next Steps:
-1. **Date Format Divergence**:
-   - `MonthSheet.gs` formats dates as `'MMdd'` (e.g. `0908`).
-   - `Tasks.gs:addTaskRow()` formats dates as `'ddMMM'` (e.g. `08SEP`).
-   - *Target Fix*: Unify into a single `CONFIG.DATE_FORMAT` property in `Config.gs`.
-3. **`clearTasks()` Target Safety**:
-   - `clearTasks()` runs on `getActiveSheet()` without verifying if the active sheet is `Lists`. If run on the Lists sheet, it erases options and sets status to 'Pending'.
+   - Updated `Menu.gs` to have the two requested options: `Generate DSR for today` and `Generate DSR for selected date in the month`.
+4. **Streamlined Task Entry & Batch Insertion**:
+   - Removed `Notes` column across the entire workbook (`Config.gs`, `MonthSheet.gs`, `Formatting.gs`, `ConditionalFormatting.gs`, `Tasks.gs`).
+   - Unified schema to 7 columns: `Date`, `Day`, `Project`, `Task`, `Category`, `Priority`, `Status`.
+   - All newly generated rows and added tasks default automatically to `Pending` status.
+   - Built a fast, intuitive modal dialog for task entry (`Tasks -> Fill task for today` and `Fill task for selected date in the current month`).
+   - Allows selecting `Project`, `Category`, and `Priority` once, and entering/pasting multiple tasks in a textarea (one per line, auto-cleaning bullet points).
+   - Includes `+ Add & Next Project` button to immediately log tasks for another project without closing the modal.
+   - Preserves keyboard shortcut `Ctrl + Enter` for instant submission.
+   - Automatically populates Date and Day, updates the existing date row or inserts subsequent rows with the same Date/Day, and applies formatting and dropdowns.
+5. **Resolved Architectural Review Items**:
+   - Date Format Divergence resolved: Added unified `CONFIG.DATE_FORMAT: 'MMdd'`.
+   - `clearTasks()` Target Safety resolved: Clears columns 3-7 on month sheets and is blocked on the `Lists` sheet.
 
 ---
 

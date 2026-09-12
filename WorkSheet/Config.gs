@@ -1,5 +1,6 @@
 const CONFIG = {
   HEADER_ROW: 1,
+  DATE_FORMAT: 'MMdd',
   DEFAULT_TASKS_PER_DAY: 1,
   LISTS_SHEET_NAME: 'Lists',
 
@@ -10,8 +11,7 @@ const CONFIG = {
     'Task',
     'Category',
     'Priority',
-    'Status',
-    'Notes'
+    'Status'
   ],
 
   COLORS: {

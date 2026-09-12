@@ -96,7 +96,7 @@ function createMonthRows(
       Utilities.formatDate(
         date,
         timezone,
-        'MMdd'
+        CONFIG.DATE_FORMAT || 'MMdd'
       );
 
     const dayLabel =
@@ -118,8 +118,7 @@ function createMonthRows(
         '',
         '',
         '',
-        'Pending',
-        ''
+        'Pending'
       ]);
     }
   }

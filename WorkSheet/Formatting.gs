@@ -68,22 +68,18 @@ function formatColumns(sheet) {
 
   sheet.getRange('E:G')
     .setHorizontalAlignment('center');
-
-  sheet.getRange('H:H')
-    .setHorizontalAlignment('left');
 }
 
 
 function formatDimensions(sheet) {
   const widths = [
-    75,
-    60,
-    130,
-    315,
-    125,
-    90,
-    125,
-    300
+    75,   // Date
+    60,   // Day
+    130,  // Project
+    340,  // Task
+    130,  // Category
+    100,  // Priority
+    125   // Status
   ];
 
   widths.forEach((width, index) => {

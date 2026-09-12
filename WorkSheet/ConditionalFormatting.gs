@@ -104,7 +104,7 @@ function setupWeekendFormatting(sheet) {
       .setBackground('#f3f4f6')
       .setFontColor('#6b7280')
       .setRanges([
-        sheet.getRange('A2:H')
+        sheet.getRange('A2:G')
       ])
       .build()
   );
@@ -117,7 +117,7 @@ function setupWeekendFormatting(sheet) {
       .setBackground('#fce8e6')
       .setFontColor('#cc0000')
       .setRanges([
-        sheet.getRange('A2:H')
+        sheet.getRange('A2:G')
       ])
       .build()
   );

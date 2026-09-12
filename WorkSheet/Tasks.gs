@@ -1,47 +1,31 @@
 // ============================================================
-// TASKS.GS — TASK STAGING & INSERTION ENGINE
+// TASKS.GS — FAST TASK ENTRY & BATCH INSERTION ENGINE
 // ============================================================
 
 /**
- * Headers for the temporary Task Entry (Staging) sheet.
- * Date and Day are omitted here as requested; they are inferred from the sheet date.
- */
-const STAGING_HEADERS = [
-  'Project',
-  'Task',
-  'Category',
-  'Priority',
-  'Status',
-  'Notes'
-];
-
-/**
  * Menu Action: Fill task for today.
- * Opens or creates a staging sheet named "Date Month Year" (e.g. "08 September 2026").
+ * Opens the streamlined task entry dialog for today's date.
  */
 function fillTaskForToday() {
-  const timezone = getTimezone();
   const today = getToday();
-  openTaskStagingSheet(today);
+  openTaskDialog(today);
 }
 
 /**
  * Menu Action: Fill task for selected date in the current month.
- * Asks ONLY for a day number between 1 and the total days of the current month.
+ * Prompts for the day number and opens the task entry dialog.
  */
 function fillTaskForSelectedDate() {
-  const timezone = getTimezone();
   const today = getToday();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0-indexed (e.g. 8 for September)
-
-  // Calculate total days in the current month (28, 29, 30, or 31)
+  const currentMonth = today.getMonth();
+  const currentDay = today.getDate();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
   const ui = SpreadsheetApp.getUi();
   const response = ui.prompt(
     'Fill Task for Selected Date',
-    `Enter day of the current month (1–${daysInMonth}):`,
+    `Enter day of current month (1–${daysInMonth}) [Default: ${currentDay}]:`,
     ui.ButtonSet.OK_CANCEL
   );
 
@@ -49,251 +33,123 @@ function fillTaskForSelectedDate() {
     return;
   }
 
-  const input = response.getResponseText().trim();
+  const input = response.getResponseText().trim() || String(currentDay);
   const dayNumber = parseInt(input, 10);
 
   if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > daysInMonth) {
     ui.alert(
       'Invalid Day Number',
-      `Please enter a valid number between 1 and ${daysInMonth}.`,
+      `Please enter a valid day between 1 and ${daysInMonth}.`,
       ui.ButtonSet.OK
     );
     return;
   }
 
   const targetDate = new Date(currentYear, currentMonth, dayNumber);
-  openTaskStagingSheet(targetDate);
+  openTaskDialog(targetDate);
 }
 
 /**
- * Creates and sets up the temporary "Date Month Year" staging sheet
- * without Date or Day columns, and displays the task entry sidebar.
+ * Opens the streamlined Task Entry modal dialog.
+ * Allows adding multiple tasks for a single project with shared category & priority.
+ * Status is automatically "Pending", and no Notes field is requested.
  *
  * @param {Date} targetDate
  */
-function openTaskStagingSheet(targetDate) {
+function openTaskDialog(targetDate) {
   const ss = getSpreadsheet();
   const timezone = getTimezone();
-  const stagingSheetName = getStagingSheetName(targetDate, timezone);
-  const targetMonthSheetName = getMonthSheetName(targetDate, timezone);
+  const date = targetDate || getToday();
 
-  // Ensure reference lists exist
+  // Ensure Lists sheet exists so project/category lists are available
   ensureListsSheet(ss);
 
-  // Ensure the target month sheet exists
-  let monthSheet = ss.getSheetByName(targetMonthSheetName);
+  const currentYear = date.getFullYear();
+  const currentMonth = date.getMonth();
+  const currentDay = date.getDate();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const monthSheetName = getMonthSheetName(date, timezone);
+
+  // Ensure target month sheet exists
+  let monthSheet = ss.getSheetByName(monthSheetName);
   if (!monthSheet) {
     createCurrentMonthSheet();
-    monthSheet = ss.getSheetByName(targetMonthSheetName);
+    monthSheet = ss.getSheetByName(monthSheetName);
   }
 
-  // If staging sheet already exists, activate it and reopen sidebar
-  let stagingSheet = ss.getSheetByName(stagingSheetName);
-  if (stagingSheet) {
-    ss.setActiveSheet(stagingSheet);
-    showTaskStagingSidebar(targetDate, stagingSheetName, targetMonthSheetName);
-    return;
-  }
-
-  // Create the staging sheet
-  stagingSheet = ss.insertSheet(stagingSheetName);
-
-  // Store target date in developer metadata for exact retrieval
-  try {
-    stagingSheet.addDeveloperMetadata(
-      'TARGET_DATE',
-      Utilities.formatDate(targetDate, timezone, 'yyyy-MM-dd')
-    );
-  } catch (e) {}
-
-  // 1. Setup Header (6 task columns, omitting Date and Day)
-  stagingSheet
-    .getRange(1, 1, 1, STAGING_HEADERS.length)
-    .setValues([STAGING_HEADERS]);
-
-  stagingSheet
-    .getRange(1, 1, 1, STAGING_HEADERS.length)
-    .setBackground(CONFIG.COLORS.HEADER)
-    .setFontFamily('Arial')
-    .setFontWeight('bold')
-    .setHorizontalAlignment('center');
-
-  stagingSheet.setRowHeight(1, 28);
-
-  // 2. Pre-fill initial 5 blank task rows
-  const initialRows = [];
-  for (let i = 0; i < 5; i++) {
-    initialRows.push([
-      '',          // Project
-      '',          // Task
-      '',          // Category
-      'Medium',    // Priority
-      'Pending',   // Status
-      ''           // Notes
-    ]);
-  }
-
-  stagingSheet
-    .getRange(2, 1, initialRows.length, STAGING_HEADERS.length)
-    .setValues(initialRows);
-
-  // 3. Formatting dimensions and styling
-  // Project(140), Task(340), Category(130), Priority(100), Status(130), Notes(300)
-  const stagingWidths = [140, 340, 130, 100, 130, 300];
-  stagingWidths.forEach((w, idx) => {
-    stagingSheet.setColumnWidth(idx + 1, w);
-  });
-
-  stagingSheet.setRowHeights(2, 15, 42);
-
-  stagingSheet.getRange('A2:A').setHorizontalAlignment('center');
-  stagingSheet.getRange('B2:B').setHorizontalAlignment('left');
-  stagingSheet.getRange('C2:E').setHorizontalAlignment('center');
-  stagingSheet.getRange('F2:F').setHorizontalAlignment('left');
-
-  stagingSheet
-    .getRange(1, 1, 20, STAGING_HEADERS.length)
-    .setFontFamily('Arial')
-    .setFontSize(10)
-    .setVerticalAlignment('middle')
-    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
-
-  formatBorders(stagingSheet.getRange(1, 1, 15, STAGING_HEADERS.length));
-
-  // 4. Setup dropdown validations for the 6 staging columns
-  setupDropdownsForStagingSheet(stagingSheet);
-
-  // 5. Freeze header & trim excess
-  stagingSheet.setFrozenRows(1);
-  trimSheet(stagingSheet, 20, STAGING_HEADERS.length);
-
-  // 6. Focus on the first Task cell (B2)
-  ss.setActiveSheet(stagingSheet);
-  stagingSheet.setActiveSelection('B2');
-
-  // 7. Open the submission sidebar
-  showTaskStagingSidebar(targetDate, stagingSheetName, targetMonthSheetName);
-}
-
-/**
- * Applies dropdown validation rules for the staging sheet (6 columns).
- * Col 1: Projects, Col 3: Categories, Col 4: Priorities, Col 5: Statuses
- */
-function setupDropdownsForStagingSheet(sheet) {
-  const rowCount = Math.max(sheet.getLastRow() - 1, 20);
-  const ss = sheet.getParent();
-
-  const rules = {
-    1: createDropdownRule(ss, 'Projects'),
-    3: createDropdownRule(ss, 'Categories'),
-    4: createDropdownRule(ss, 'Priorities'),
-    5: createDropdownRule(ss, 'Statuses')
+  const dateInfo = {
+    day: currentDay,
+    monthIndex: currentMonth,
+    year: currentYear,
+    daysInMonth: daysInMonth,
+    formattedDate: Utilities.formatDate(date, timezone, 'EEEE, dd MMMM yyyy'),
+    shortDate: Utilities.formatDate(date, timezone, 'dd/MM/yyyy'),
+    monthSheetName: monthSheetName
   };
 
-  Object.entries(rules).forEach(([column, rule]) => {
-    if (rule) {
-      sheet
-        .getRange(2, Number(column), rowCount, 1)
-        .setDataValidation(rule);
-    }
-  });
-}
+  const configLists = {
+    projects: (CONFIG.LISTS && CONFIG.LISTS.Projects) || [],
+    categories: (CONFIG.LISTS && CONFIG.LISTS.Categories) || [],
+    priorities: (CONFIG.LISTS && CONFIG.LISTS.Priorities) || ['Low', 'Medium', 'High', 'Urgent']
+  };
 
-/**
- * Opens the Task Entry Sidebar in Google Sheets.
- */
-function showTaskStagingSidebar(targetDate, stagingSheetName, monthSheetName) {
-  const timezone = getTimezone();
-  const formattedDate = Utilities.formatDate(targetDate, timezone, 'dd MMMM yyyy');
-  const shortDate = Utilities.formatDate(targetDate, timezone, 'dd/MM/yyyy');
-
-  const htmlContent = getTaskSidebarHtml(
-    formattedDate,
-    shortDate,
-    stagingSheetName,
-    monthSheetName
-  );
-
+  const htmlContent = getTaskDialogHtml(dateInfo, configLists);
   const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
-    .setTitle('Task Entry');
+    .setWidth(540)
+    .setHeight(560);
 
-  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+  SpreadsheetApp.getUi().showModalDialog(
+    htmlOutput,
+    `Add Daily Tasks — ${dateInfo.shortDate}`
+  );
 }
 
 /**
- * Client-callable function: Saves tasks from the staging sheet into the month sheet,
- * populates Date and Day automatically, inserts additional rows with the same date
- * if more than one task was entered, and deletes the staging sheet.
+ * Client-callable function: Saves a batch of tasks for a single project
+ * directly into the Month sheet.
+ * All added tasks automatically receive Status = 'Pending' without Notes.
  *
- * @param {string} stagingSheetName
+ * @param {Object} payload
  * @returns {Object} Result object
  */
-function saveTasksFromStagingSheet(stagingSheetName) {
+function saveTasksBatch(payload) {
   const ss = getSpreadsheet();
   const timezone = getTimezone();
-  const tempSheet = ss.getSheetByName(stagingSheetName);
 
-  if (!tempSheet) {
+  if (!payload || !payload.tasks || !payload.tasks.length) {
     return {
       success: false,
-      message: `Staging sheet "${stagingSheetName}" was not found.`
+      message: 'Please enter at least one task.'
     };
   }
 
-  const lastRow = tempSheet.getLastRow();
-  if (lastRow < 2) {
-    return {
-      success: false,
-      message: 'No tasks entered. Please enter at least one task before saving.'
-    };
-  }
+  const project = String(payload.project || '').trim();
+  const category = String(payload.category || '').trim();
+  const priority = String(payload.priority || 'Medium').trim();
+  const status = 'Pending'; // Always Pending automatically
 
-  // Read entered tasks from the 6 staging columns:
-  // [Project, Task, Category, Priority, Status, Notes]
-  const rawData = tempSheet
-    .getRange(2, 1, lastRow - 1, STAGING_HEADERS.length)
-    .getValues();
-
-  const enteredTasks = [];
-  rawData.forEach(row => {
-    const taskDesc = row[1] ? String(row[1]).trim() : '';
-    if (taskDesc) {
-      enteredTasks.push({
-        project: row[0] || '',
-        task: taskDesc,
-        category: row[2] || '',
-        priority: row[3] || 'Medium',
-        status: row[4] || 'Pending',
-        notes: row[5] || ''
-      });
+  // Clean task lines (strip leading bullet characters: -, *, •, 1., etc.)
+  const cleanedTasks = [];
+  payload.tasks.forEach(t => {
+    let clean = String(t || '').trim();
+    clean = clean.replace(/^[\-\*\•\d+\.\)]\s*/, '').trim();
+    if (clean) {
+      cleanedTasks.push(clean);
     }
   });
 
-  if (enteredTasks.length === 0) {
+  if (cleanedTasks.length === 0) {
     return {
       success: false,
-      message: 'No tasks found. Please enter at least one task title in the "Task" column.'
+      message: 'Please enter at least one valid task description.'
     };
   }
 
-  // Resolve target date (via developer metadata or sheet name)
-  let targetDate = null;
-  try {
-    const metaList = tempSheet.getDeveloperMetadata();
-    const targetMeta = metaList.find(m => m.getKey() === 'TARGET_DATE');
-    if (targetMeta) {
-      const parts = targetMeta.getValue().split('-');
-      targetDate = new Date(
-        parseInt(parts[0], 10),
-        parseInt(parts[1], 10) - 1,
-        parseInt(parts[2], 10)
-      );
-    }
-  } catch (e) {}
-
-  if (!targetDate) {
-    targetDate = parseDateFromStagingSheetName(stagingSheetName) || getToday();
-  }
+  // Resolve target Date
+  const year = parseInt(payload.year, 10);
+  const month = parseInt(payload.monthIndex, 10);
+  const day = parseInt(payload.day, 10);
+  const targetDate = new Date(year, month, day);
 
   const targetMonthSheetName = getMonthSheetName(targetDate, timezone);
   let monthSheet = ss.getSheetByName(targetMonthSheetName);
@@ -310,7 +166,7 @@ function saveTasksFromStagingSheet(stagingSheetName) {
     };
   }
 
-  // Find all rows in monthSheet matching targetDate
+  // Find existing rows for targetDate in monthSheet
   const monthLastRow = monthSheet.getLastRow();
   const dateColValues = monthSheet
     .getRange(2, 1, Math.max(monthLastRow - 1, 1), 1)
@@ -327,45 +183,44 @@ function saveTasksFromStagingSheet(stagingSheetName) {
 
   if (matchingRowIndices.length > 0) {
     const firstRowIndex = matchingRowIndices[0];
-    const existingTask = monthSheet.getRange(firstRowIndex, 4).getValue();
+    const existingTask = monthSheet.getRange(firstRowIndex, 4).getValue(); // Col 4 is Task
     const isFirstRowEmpty = !existingTask || String(existingTask).trim() === '';
 
-    let remainingTasks = enteredTasks;
+    let remainingTasks = cleanedTasks;
     let insertAfterRow = matchingRowIndices[matchingRowIndices.length - 1];
 
     if (isFirstRowEmpty) {
-      // 1. Fill first task into the existing row for this date
-      const t1 = enteredTasks[0];
-      monthSheet.getRange(firstRowIndex, 3, 1, 6).setValues([[
-        t1.project,
-        t1.task,
-        t1.category,
-        t1.priority,
-        t1.status,
-        t1.notes
+      // 1. Fill first task into the existing template row for this date
+      const t1 = cleanedTasks[0];
+      monthSheet.getRange(firstRowIndex, 3, 1, 5).setValues([[
+        project,
+        t1,
+        category,
+        priority,
+        status
       ]]);
       firstSavedRow = firstRowIndex;
-      remainingTasks = enteredTasks.slice(1);
+      remainingTasks = cleanedTasks.slice(1);
       insertAfterRow = firstRowIndex;
     }
 
-    // 2. If there are more tasks for this day, insert new row(s) after with the SAME date and day
+    // 2. If there are more tasks, insert new rows directly after with the SAME Date and Day
     const dateVal = monthSheet.getRange(firstRowIndex, 1).getValue();
     const dayVal = monthSheet.getRange(firstRowIndex, 2).getValue();
 
-    remainingTasks.forEach(task => {
+    remainingTasks.forEach(taskText => {
       monthSheet.insertRowAfter(insertAfterRow);
       const newRow = insertAfterRow + 1;
 
+      // Columns: Date, Day, Project, Task, Category, Priority, Status (7 columns)
       monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length).setValues([[
         dateVal,
         dayVal,
-        task.project,
-        task.task,
-        task.category,
-        task.priority,
-        task.status,
-        task.notes
+        project,
+        taskText,
+        category,
+        priority,
+        status
       ]]);
 
       monthSheet.setRowHeight(newRow, 42);
@@ -386,7 +241,6 @@ function saveTasksFromStagingSheet(stagingSheetName) {
       monthSheet.getRange(newRow, 3).setHorizontalAlignment('center');
       monthSheet.getRange(newRow, 4).setHorizontalAlignment('left');
       monthSheet.getRange(newRow, 5, 1, 3).setHorizontalAlignment('center');
-      monthSheet.getRange(newRow, 8).setHorizontalAlignment('left');
 
       formatBorders(monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length));
       setupDropdownsForRow(monthSheet, newRow);
@@ -395,20 +249,19 @@ function saveTasksFromStagingSheet(stagingSheetName) {
     });
   } else {
     // Fallback: Append tasks to the bottom of the month sheet
-    const fallbackDateLabel = Utilities.formatDate(targetDate, timezone, 'MMdd');
+    const fallbackDateLabel = Utilities.formatDate(targetDate, timezone, CONFIG.DATE_FORMAT || 'MMdd');
     const fallbackDayLabel = Utilities.formatDate(targetDate, timezone, 'EEE');
 
-    enteredTasks.forEach(task => {
+    cleanedTasks.forEach(taskText => {
       const newRow = monthSheet.getLastRow() + 1;
       monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length).setValues([[
         fallbackDateLabel,
         fallbackDayLabel,
-        task.project,
-        task.task,
-        task.category,
-        task.priority,
-        task.status,
-        task.notes
+        project,
+        taskText,
+        category,
+        priority,
+        status
       ]]);
 
       monthSheet.setRowHeight(newRow, 42);
@@ -417,60 +270,22 @@ function saveTasksFromStagingSheet(stagingSheetName) {
     });
   }
 
-  // 3. Delete the temporary "Date Month Year" staging sheet
-  ss.deleteSheet(tempSheet);
-
-  // 4. Return user to the month sheet
+  // Refocus user on the month sheet and highlight the added row
   ss.setActiveSheet(monthSheet);
   monthSheet.setActiveSelection(`D${firstSavedRow}`);
 
   return {
     success: true,
-    count: enteredTasks.length,
+    count: cleanedTasks.length,
+    project: project || 'General',
     monthSheetName: targetMonthSheetName,
     firstRow: firstSavedRow
   };
 }
 
 /**
- * Parses target date from staging sheet name (e.g. "08 September 2026").
- */
-function parseDateFromStagingSheetName(sheetName) {
-  if (!sheetName) return null;
-
-  const match = sheetName.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
-  if (match) {
-    const day = parseInt(match[1], 10);
-    const monthName = match[2].toLowerCase();
-    const year = parseInt(match[3], 10);
-    const monthNames = [
-      'january', 'february', 'march', 'april', 'may', 'june',
-      'july', 'august', 'september', 'october', 'november', 'december'
-    ];
-    const monthIndex = monthNames.indexOf(monthName);
-    if (monthIndex !== -1) {
-      return new Date(year, monthIndex, day);
-    }
-  }
-  return null;
-}
-
-/**
- * Client-callable function: Discards and deletes the temporary staging sheet.
- */
-function cancelTaskStagingSheet(stagingSheetName) {
-  const ss = getSpreadsheet();
-  const tempSheet = ss.getSheetByName(stagingSheetName);
-
-  if (tempSheet) {
-    ss.deleteSheet(tempSheet);
-  }
-
-  return { success: true };
-}
-
-/**
- * Applies dropdown validation rules for the 8-column month sheet.
+ * Applies dropdown validation rules for the 7-column month sheet.
+ * Col 3: Projects, Col 5: Categories, Col 6: Priorities, Col 7: Statuses
  */
 function setupDropdowns(sheet) {
   const rowCount = Math.max(sheet.getLastRow() - 1, 20);
@@ -531,18 +346,13 @@ function createDropdownRule(ss, namedRange) {
 }
 
 /**
- * Legacy helper: Appends a single task row at the bottom.
- */
-function addTaskRow() {
-  fillTaskForToday();
-}
-
-/**
  * Clears task data while safeguarding against accidental clearing of the Lists sheet.
+ * Clears Columns 3 to 7 (Project through Status), resetting Status to 'Pending'.
  */
 function clearTasks() {
   const ui = SpreadsheetApp.getUi();
-  const sheet = getSpreadsheet().getActiveSheet();
+  const ss = getSpreadsheet();
+  const sheet = ss.getActiveSheet();
 
   if (sheet.getName() === CONFIG.LISTS_SHEET_NAME) {
     ui.alert('Cannot clear tasks on the Lists sheet.');
@@ -564,23 +374,41 @@ function clearTasks() {
     return;
   }
 
-  // Clear Project through Notes (Cols 3 to 8)
+  // Clear Project through Status (Cols 3 to 7: 5 columns)
   sheet
-    .getRange(2, 3, lastRow - 1, 6)
+    .getRange(2, 3, lastRow - 1, 5)
     .clearContent();
 
-  // Restore default status to Pending
+  // Restore default status to Pending (Col 7)
   sheet
     .getRange(2, 7, lastRow - 1, 1)
     .setValue('Pending');
 }
 
 /**
- * Generates HTML for the Task Entry Sidebar.
+ * Backwards compatibility helper: redirects to fillTaskForToday().
  */
-function getTaskSidebarHtml(formattedDate, shortDate, stagingSheetName, monthSheetName) {
-  const jsonStaging = JSON.stringify(stagingSheetName).replace(/<\/script/gi, '<\\/script');
-  const jsonMonth = JSON.stringify(monthSheetName).replace(/<\/script/gi, '<\\/script');
+function addTaskRow() {
+  fillTaskForToday();
+}
+
+/**
+ * Backwards compatibility alias: redirects staging sheet call to openTaskDialog.
+ */
+function openTaskStagingSheet(targetDate) {
+  openTaskDialog(targetDate);
+}
+
+/**
+ * Generates HTML for the Task Entry Modal Dialog.
+ *
+ * @param {Object} dateInfo
+ * @param {Object} configLists
+ * @returns {string} HTML content
+ */
+function getTaskDialogHtml(dateInfo, configLists) {
+  const jsonDateInfo = JSON.stringify(dateInfo).replace(/<\/script/gi, '<\\/script');
+  const jsonConfig = JSON.stringify(configLists).replace(/<\/script/gi, '<\\/script');
 
   return `<!DOCTYPE html>
 <html>
@@ -602,227 +430,508 @@ function getTaskSidebarHtml(formattedDate, shortDate, stagingSheetName, monthShe
       line-height: 1.5;
     }
 
-    .header-card {
+    .card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 14px 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
-    .title-row {
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .title-area {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .title-icon {
+      font-size: 18px;
+    }
+
+    .title-text {
       font-size: 15px;
       font-weight: 700;
       color: #0f172a;
-      margin-bottom: 6px;
     }
 
-    .date-badge {
-      display: inline-block;
+    .badge-tab {
       background: #ede9fe;
       color: #6366f1;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .date-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .date-label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .day-selector {
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .date-display-text {
+      color: #334155;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #64748b;
+    }
+
+    select, textarea {
+      font-family: inherit;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 10px;
+      background-color: #ffffff;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    select:focus, textarea:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .status-auto-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #b45309;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid #fde68a;
+    }
+
+    .task-area-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .counter-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: #ede9fe;
+      padding: 1px 7px;
       border-radius: 9999px;
     }
 
-    .meta-text {
-      font-size: 12px;
-      color: #64748b;
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      max-height: 160px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+
+    .tip-text {
+      font-size: 11px;
+      color: #94a3b8;
       margin-top: 4px;
-    }
-
-    .instructions {
-      background: #f1f5f9;
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      font-size: 12px;
-      color: #334155;
-    }
-
-    .instructions ol {
-      padding-left: 18px;
-      margin-top: 6px;
-    }
-
-    .instructions li {
-      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .btn-container {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      margin-top: 14px;
     }
 
     .btn {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      width: 100%;
-      padding: 10px 14px;
-      font-size: 13px;
+      padding: 9px 14px;
+      font-size: 12px;
       font-weight: 600;
-      border-radius: 7px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease-in-out;
       outline: none;
       user-select: none;
+      border: 1px solid transparent;
     }
 
-    .btn-save {
-      background-color: #5850ec;
-      color: #ffffff;
-      border: 1px solid #4f46e5;
-      box-shadow: 0 1px 3px rgba(88, 80, 236, 0.25);
-    }
-
-    .btn-save:hover {
+    .btn-primary {
       background-color: #4f46e5;
+      color: #ffffff;
+      flex: 1.2;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
     }
 
-    .btn-save:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .btn-primary:hover {
+      background-color: #4338ca;
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      color: #4f46e5;
+      border-color: #c7d2fe;
+      flex: 1.2;
+    }
+
+    .btn-secondary:hover {
+      background-color: #eef2ff;
+      border-color: #a5b4fc;
     }
 
     .btn-cancel {
       background-color: #ffffff;
       color: #64748b;
-      border: 1px solid #e2e8f0;
+      border-color: #e2e8f0;
+      flex: 0.6;
     }
 
     .btn-cancel:hover {
-      background-color: #f8fafc;
+      background-color: #f1f5f9;
       color: #0f172a;
-      border-color: #cbd5e1;
     }
 
-    .status-msg {
-      margin-top: 14px;
-      padding: 10px;
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-toast {
+      margin-top: 10px;
+      padding: 8px 12px;
       border-radius: 6px;
       font-size: 12px;
       display: none;
       text-align: center;
     }
 
-    .status-msg.error {
-      display: block;
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-
-    .status-msg.success {
+    .status-toast.success {
       display: block;
       background: #f0fdf4;
-      color: #15803d;
+      color: #166534;
       border: 1px solid #bbf7d0;
+    }
+
+    .status-toast.error {
+      display: block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
     }
   </style>
 </head>
 <body>
-  <div class="header-card">
-    <div class="title-row">
-      <span>📝</span>
-      <span>Fill Daily Tasks</span>
+  <div class="card">
+    <div class="header-row">
+      <div class="title-area">
+        <span class="title-icon">⚡</span>
+        <span class="title-text">Add Daily Tasks</span>
+      </div>
+      <span class="badge-tab" id="monthBadge"></span>
     </div>
-    <span class="date-badge">${shortDate}</span>
-    <div class="meta-text">Target Tab: <strong>${monthSheetName}</strong></div>
-    <div class="meta-text">Staging Tab: <strong>${stagingSheetName}</strong></div>
-  </div>
 
-  <div class="instructions">
-    <strong>How it works:</strong>
-    <ol>
-      <li>Enter your tasks in the sheet on the left (Project, Task, Category, Priority, Status, Notes).</li>
-      <li>Date and Day are handled automatically.</li>
-      <li>Fill as many rows as needed for this date.</li>
-      <li>Click <strong>Save Tasks to Month Sheet</strong> below when finished.</li>
-    </ol>
-  </div>
+    <!-- Date Row -->
+    <div class="date-row">
+      <span class="date-label">Day:</span>
+      <select id="daySelect" class="day-selector" onchange="handleDayChange()"></select>
+      <span id="dateDisplay" class="date-display-text"></span>
+    </div>
 
-  <div class="btn-container">
-    <button id="saveBtn" class="btn btn-save" onclick="handleSave()">
-      📥 Save Tasks to Month Sheet
-    </button>
-    <button id="cancelBtn" class="btn btn-cancel" onclick="handleCancel()">
-      ✕ Cancel & Delete Sheet
-    </button>
-  </div>
+    <!-- Form Controls for Project, Category, Priority -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="projectSelect">Project</label>
+        <select id="projectSelect"></select>
+      </div>
 
-  <div id="statusMsg" class="status-msg"></div>
+      <div class="form-group">
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="prioritySelect">Priority</label>
+        <select id="prioritySelect"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <div class="status-auto-row">
+          <span style="font-size: 11px; color: #64748b;">Default</span>
+          <span class="badge-pending">Pending (Auto)</span>
+        </div>
+      </div>
+
+      <!-- Tasks Textarea -->
+      <div class="form-group full-width">
+        <div class="task-area-label-row">
+          <label for="tasksInput">Tasks (one per line)</label>
+          <span id="taskCountBadge" class="counter-badge">0 tasks</span>
+        </div>
+        <textarea
+          id="tasksInput"
+          placeholder="Paste or type tasks for this project...&#10;• Example task 1&#10;• Example task 2"
+          oninput="updateTaskCount()"
+        ></textarea>
+        <div class="tip-text">
+          <span>⌨️ Shortcut: Press <strong>Ctrl + Enter</strong> to add tasks</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="btn-container">
+      <button id="saveBtn" class="btn btn-primary" onclick="submitBatch(false)">
+        📥 Add Tasks
+      </button>
+      <button id="saveAndNextBtn" class="btn btn-secondary" onclick="submitBatch(true)">
+        + Add & Next Project
+      </button>
+      <button id="closeBtn" class="btn btn-cancel" onclick="google.script.host.close()">
+        Close
+      </button>
+    </div>
+
+    <div id="statusToast" class="status-toast"></div>
+  </div>
 
   <script>
-    const stagingSheetName = ${jsonStaging};
-    const monthSheetName = ${jsonMonth};
+    const dateInfo = ${jsonDateInfo};
+    const configLists = ${jsonConfig};
 
-    function handleSave() {
-      const btn = document.getElementById('saveBtn');
-      const cancelBtn = document.getElementById('cancelBtn');
-      const msg = document.getElementById('statusMsg');
+    // Initialize UI on load
+    window.onload = function() {
+      initDateSelectors();
+      initDropdowns();
+      document.getElementById('monthBadge').innerText = dateInfo.monthSheetName;
+      document.getElementById('tasksInput').focus();
+    };
 
-      btn.disabled = true;
-      cancelBtn.disabled = true;
-      btn.innerHTML = '⏳ Saving tasks...';
-      msg.style.display = 'none';
+    function initDateSelectors() {
+      const daySelect = document.getElementById('daySelect');
+      daySelect.innerHTML = '';
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (!res.success) {
-            btn.disabled = false;
-            cancelBtn.disabled = false;
-            btn.innerHTML = '📥 Save Tasks to Month Sheet';
-            msg.className = 'status-msg error';
-            msg.innerText = res.message || 'Failed to save tasks.';
-            return;
-          }
+      for (let d = 1; d <= dateInfo.daysInMonth; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.text = (d < 10 ? '0' : '') + d;
+        if (d === dateInfo.day) {
+          opt.selected = true;
+        }
+        daySelect.appendChild(opt);
+      }
 
-          btn.innerHTML = '✓ Tasks Saved!';
-          btn.style.backgroundColor = '#16a34a';
-          btn.style.borderColor = '#15803d';
-          msg.className = 'status-msg success';
-          msg.innerText = 'Saved ' + res.count + ' task(s) to ' + res.monthSheetName + '! Staging sheet deleted.';
-
-          setTimeout(function() {
-            google.script.host.close();
-          }, 1500);
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          cancelBtn.disabled = false;
-          btn.innerHTML = '📥 Save Tasks to Month Sheet';
-          msg.className = 'status-msg error';
-          msg.innerText = 'Error: ' + (err.message || err);
-        })
-        .saveTasksFromStagingSheet(stagingSheetName);
+      updateDateDisplay();
     }
 
-    function handleCancel() {
-      if (!confirm('Are you sure you want to discard this sheet and all entries on it?')) {
+    function handleDayChange() {
+      const daySelect = document.getElementById('daySelect');
+      dateInfo.day = parseInt(daySelect.value, 10);
+      updateDateDisplay();
+    }
+
+    function updateDateDisplay() {
+      const d = new Date(dateInfo.year, dateInfo.monthIndex, dateInfo.day);
+      const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+      document.getElementById('dateDisplay').innerText = d.toLocaleDateString('en-GB', options);
+    }
+
+    function initDropdowns() {
+      // Projects
+      const projSelect = document.getElementById('projectSelect');
+      projSelect.innerHTML = '';
+      (configLists.projects || []).forEach(function(p) {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.text = p;
+        projSelect.appendChild(opt);
+      });
+
+      // Categories
+      const catSelect = document.getElementById('categorySelect');
+      catSelect.innerHTML = '';
+      (configLists.categories || []).forEach(function(c) {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.text = c;
+        if (c.toLowerCase() === 'development') {
+          opt.selected = true;
+        }
+        catSelect.appendChild(opt);
+      });
+
+      // Priorities
+      const prioSelect = document.getElementById('prioritySelect');
+      prioSelect.innerHTML = '';
+      (configLists.priorities || []).forEach(function(pr) {
+        const opt = document.createElement('option');
+        opt.value = pr;
+        opt.text = pr;
+        if (pr.toLowerCase() === 'medium') {
+          opt.selected = true;
+        }
+        prioSelect.appendChild(opt);
+      });
+    }
+
+    function getTaskLines() {
+      const text = document.getElementById('tasksInput').value || '';
+      return text
+        .split('\\n')
+        .map(function(line) { return line.trim(); })
+        .filter(function(line) { return line.length > 0; });
+    }
+
+    function updateTaskCount() {
+      const count = getTaskLines().length;
+      const badge = document.getElementById('taskCountBadge');
+      badge.innerText = count + (count === 1 ? ' task' : ' tasks');
+    }
+
+    // Ctrl + Enter shortcut
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        submitBatch(false);
+      }
+    });
+
+    function submitBatch(keepOpen) {
+      const tasks = getTaskLines();
+      const toast = document.getElementById('statusToast');
+
+      if (tasks.length === 0) {
+        toast.className = 'status-toast error';
+        toast.innerText = 'Please write or paste at least one task.';
+        document.getElementById('tasksInput').focus();
         return;
       }
 
-      const cancelBtn = document.getElementById('cancelBtn');
-      cancelBtn.disabled = true;
-      cancelBtn.innerText = 'Deleting...';
+      const project = document.getElementById('projectSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const priority = document.getElementById('prioritySelect').value;
+
+      const payload = {
+        day: dateInfo.day,
+        monthIndex: dateInfo.monthIndex,
+        year: dateInfo.year,
+        project: project,
+        category: category,
+        priority: priority,
+        tasks: tasks
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      const saveAndNextBtn = document.getElementById('saveAndNextBtn');
+
+      saveBtn.disabled = true;
+      saveAndNextBtn.disabled = true;
+      saveBtn.innerText = '⏳ Saving...';
+      toast.style.display = 'none';
 
       google.script.run
-        .withSuccessHandler(function() {
-          google.script.host.close();
+        .withSuccessHandler(function(res) {
+          saveBtn.disabled = false;
+          saveAndNextBtn.disabled = false;
+          saveBtn.innerText = '📥 Add Tasks';
+
+          if (!res || !res.success) {
+            toast.className = 'status-toast error';
+            toast.innerText = (res && res.message) || 'Failed to save tasks.';
+            return;
+          }
+
+          if (keepOpen) {
+            // Reset task textarea for next project
+            document.getElementById('tasksInput').value = '';
+            updateTaskCount();
+
+            toast.className = 'status-toast success';
+            toast.innerText = '✓ Added ' + res.count + ' task(s) for ' + res.project + '! Ready for next project.';
+            document.getElementById('tasksInput').focus();
+          } else {
+            toast.className = 'status-toast success';
+            toast.innerText = '✓ Saved ' + res.count + ' task(s) to ' + res.monthSheetName + '!';
+
+            setTimeout(function() {
+              google.script.host.close();
+            }, 900);
+          }
         })
         .withFailureHandler(function(err) {
-          alert('Error deleting sheet: ' + err.message);
+          saveBtn.disabled = false;
+          saveAndNextBtn.disabled = false;
+          saveBtn.innerText = '📥 Add Tasks';
+          toast.className = 'status-toast error';
+          toast.innerText = 'Error: ' + (err.message || err);
         })
-        .cancelTaskStagingSheet(stagingSheetName);
+        .saveTasksBatch(payload);
     }
   </script>
 </body>
