@@ -27,8 +27,8 @@ function openCalendarPicker(mode, initialDate) {
 
   const htmlContent = getCalendarPickerHtml(dateInfo, mode);
   const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
-    .setWidth(390)
-    .setHeight(480);
+    .setWidth(410)
+    .setHeight(530);
 
   const dialogTitle = mode === 'dsr'
     ? 'Choose Date for DSR'
@@ -85,21 +85,28 @@ function getCalendarPickerHtml(dateInfo, mode) {
       padding: 0;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    html, body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      overflow: hidden;
       background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: #1e293b;
-      padding: 14px;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.4;
       user-select: none;
+    }
+
+    body {
+      padding: 12px;
     }
 
     .cal-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
@@ -107,8 +114,8 @@ function getCalendarPickerHtml(dateInfo, mode) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
       border-bottom: 1px solid #f1f5f9;
     }
 
@@ -192,16 +199,16 @@ function getCalendarPickerHtml(dateInfo, mode) {
     .days-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      margin-bottom: 14px;
+      gap: 3px;
+      margin-bottom: 12px;
     }
 
     .day-cell {
-      aspect-ratio: 1;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       color: #1e293b;
@@ -244,8 +251,8 @@ function getCalendarPickerHtml(dateInfo, mode) {
       justify-content: space-between;
       background: #f1f5f9;
       border-radius: 8px;
-      padding: 8px 12px;
-      margin-bottom: 14px;
+      padding: 7px 12px;
+      margin-bottom: 12px;
       font-size: 12px;
     }
 
@@ -272,7 +279,7 @@ function getCalendarPickerHtml(dateInfo, mode) {
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 8px 14px;
+      padding: 7px 12px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;

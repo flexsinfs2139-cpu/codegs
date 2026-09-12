@@ -81,8 +81,8 @@ function openTaskDialog(targetDate) {
 
   const htmlContent = getTaskDialogHtml(dateInfo, configLists);
   const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
-    .setWidth(540)
-    .setHeight(560);
+    .setWidth(550)
+    .setHeight(585);
 
   SpreadsheetApp.getUi().showModalDialog(
     htmlOutput,
@@ -407,13 +407,20 @@ function getTaskDialogHtml(dateInfo, configLists) {
       padding: 0;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    html, body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: #1e293b;
-      padding: 16px;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.4;
+      overflow-y: auto;
+    }
+
+    body {
+      padding: 12px 14px;
     }
 
     .card {
@@ -421,7 +428,7 @@ function getTaskDialogHtml(dateInfo, configLists) {
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 14px 16px;
-      margin-bottom: 12px;
+      margin-bottom: 0;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 

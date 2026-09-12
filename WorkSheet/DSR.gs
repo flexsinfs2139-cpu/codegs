@@ -62,8 +62,8 @@ function showDSRDialog(targetDate, isToday) {
   const htmlContent = getDSRDialogHtml(dsrData, isToday);
 
   const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
-    .setWidth(720)
-    .setHeight(560);
+    .setWidth(740)
+    .setHeight(590);
 
   const dialogTitle = isToday
     ? 'Daily Status Report — Today'
@@ -325,13 +325,20 @@ function getDSRDialogHtml(dsrData, isToday) {
       padding: 0;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      box-sizing: border-box;
       background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1e293b;
-      padding: 16px 20px;
       font-size: 14px;
       -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      padding: 14px 18px;
     }
 
     .dsr-container {
