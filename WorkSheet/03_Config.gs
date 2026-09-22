@@ -3,6 +3,14 @@ const CONFIG = {
   DATE_FORMAT: 'MMdd',
   DEFAULT_TASKS_PER_DAY: 1,
   LISTS_SHEET_NAME: 'Lists',
+  TODO_SHEET_NAME: 'Todo',
+  TODO_DROPDOWN_ROWS: 200,
+
+  TODO_HEADERS: [
+    'Task Name',
+    'Project',
+    'Priority'
+  ],
 
   HEADERS: [
     'Date',

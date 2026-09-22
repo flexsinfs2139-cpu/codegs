@@ -22,6 +22,10 @@ function onOpen() {
       'Create Lists Sheet',
       'createListsSheet'
     )
+    .addItem(
+      'Create Todo Sheet',
+      'createTodoSheet'
+    )
     .addToUi();
 
 
