@@ -59,4 +59,16 @@ function onOpen() {
       'generateDSRForSelectedDate'
     )
     .addToUi();
+
+
+  // ==========================================================
+  // DASHBOARD
+  // ==========================================================
+
+  ui.createMenu('Dashboard')
+    .addItem(
+      'Refresh Dashboard',
+      'refreshDashboard'
+    )
+    .addToUi();
 }

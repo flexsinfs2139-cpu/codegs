@@ -5,6 +5,7 @@ const CONFIG = {
   LISTS_SHEET_NAME: 'Lists',
   TODO_SHEET_NAME: 'Todo',
   TODO_DROPDOWN_ROWS: 200,
+  DASHBOARD_SHEET_NAME: 'Dashboard',
 
   TODO_HEADERS: [
     'Task Name',
