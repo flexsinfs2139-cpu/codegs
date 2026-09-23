@@ -42,7 +42,7 @@ function refreshDashboard(suppressAlert = false, keepActiveSheet = false) {
   const metrics = extractTaskMetrics(ss);
 
   renderDashboardHeader(sheet, timestamp);
-  renderKpiCards(sheet, metrics.totals);
+  renderKpiCards(sheet, metrics.totals, metrics.todayTotals);
 
   const tablesEndRow = renderTablesSection(
     sheet,
@@ -197,14 +197,21 @@ function renderDashboardHeader(sheet, timestamp) {
  * - Card 3 (E-F): IN PROGRESS
  * - Card 4 (G-H): BLOCKED
  * - Card 5 (I-J): PENDING
- * - Card 6 (K-M): COMPLETION RATE
+ * - Card 6 (K-N): COMPLETION RATE
  *
  * Uses Varela Round for titles/subtitles and Roboto Mono for big digits.
  */
-function renderKpiCards(sheet, totals) {
+function renderKpiCards(sheet, totals, todayTotals = {}) {
   const colors = CONFIG.DASHBOARD.COLORS;
   const textFont = CONFIG.FONTS.TEXT;
   const digitsFont = CONFIG.FONTS.DIGITS;
+
+  const tTotal = todayTotals.total || 0;
+  const tDone = todayTotals.done || 0;
+  const tActive = todayTotals.active || 0;
+  const tBlocked = todayTotals.blocked || 0;
+  const tPending = todayTotals.pending || 0;
+  const tRate = todayTotals.rate || 0;
 
   const cardDefs = [
     {
@@ -212,7 +219,7 @@ function renderKpiCards(sheet, totals) {
       numCols: 2,
       title: '• TOTAL TASKS',
       value: String(totals.total),
-      sub: 'Across all months',
+      sub: `${tTotal} logged today`,
       bg: colors.CARD_TOTAL_BG,
       text: colors.CARD_TOTAL_TEXT,
       border: colors.CARD_TOTAL_BORDER
@@ -222,7 +229,7 @@ function renderKpiCards(sheet, totals) {
       numCols: 2,
       title: '✓ COMPLETED',
       value: String(totals.done),
-      sub: 'Delivered items',
+      sub: `${tDone} completed today`,
       bg: colors.CARD_DONE_BG,
       text: colors.CARD_DONE_TEXT,
       border: colors.CARD_DONE_BORDER
@@ -232,7 +239,7 @@ function renderKpiCards(sheet, totals) {
       numCols: 2,
       title: '⏳ IN PROGRESS',
       value: String(totals.active),
-      sub: 'Active pipeline',
+      sub: `${tActive} active today`,
       bg: colors.CARD_ACTIVE_BG,
       text: colors.CARD_ACTIVE_TEXT,
       border: colors.CARD_ACTIVE_BORDER
@@ -242,7 +249,7 @@ function renderKpiCards(sheet, totals) {
       numCols: 2,
       title: '⛔ BLOCKED',
       value: String(totals.blocked),
-      sub: 'Requires action',
+      sub: `${tBlocked} blocked today`,
       bg: colors.CARD_BLOCKED_BG,
       text: colors.CARD_BLOCKED_TEXT,
       border: colors.CARD_BLOCKED_BORDER
@@ -252,17 +259,17 @@ function renderKpiCards(sheet, totals) {
       numCols: 2,
       title: '📋 PENDING',
       value: String(totals.pending),
-      sub: 'Open backlog',
+      sub: `${tPending} pending today`,
       bg: colors.CARD_PENDING_BG,
       text: colors.CARD_PENDING_TEXT,
       border: colors.CARD_PENDING_BORDER
     },
     {
       startCol: 11,
-      numCols: 3,
+      numCols: 4,
       title: '📈 COMPLETION RATE',
       value: `${totals.rate}%`,
-      sub: 'Delivery rate',
+      sub: `${tRate}% today's rate`,
       bg: colors.CARD_RATE_BG,
       text: colors.CARD_RATE_TEXT,
       border: colors.CARD_RATE_BORDER
@@ -357,7 +364,7 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
     .setBackground(colors.BANNER_BG)
     .setVerticalAlignment('middle');
 
-  sheet.getRange(8, 9, 1, 5)
+  sheet.getRange(8, 9, 1, 6)
     .merge()
     .setValue('  PROJECT PERFORMANCE')
     .setFontFamily(textFont)
@@ -386,8 +393,8 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
       SpreadsheetApp.BorderStyle.SOLID
     );
 
-  const rightHeaders = ['Project', 'Tasks', 'Done', 'Pending', 'Progress'];
-  sheet.getRange(9, 9, 1, 5)
+  const rightHeaders = ['Project', 'Total', 'Completed', 'In Progress', 'Blocked', 'Completion %'];
+  sheet.getRange(9, 9, 1, 6)
     .setValues([rightHeaders])
     .setFontFamily(textFont)
     .setFontSize(9)
@@ -463,11 +470,12 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
       p.project,
       p.tasks,
       p.done,
-      p.pending,
+      p.active,
+      p.blocked,
       `${p.rate}%`
     ]);
 
-    sheet.getRange(10, 9, rightRows.length, 5)
+    sheet.getRange(10, 9, rightRows.length, 6)
       .setValues(rightRows)
       .setFontSize(9)
       .setVerticalAlignment('middle');
@@ -478,26 +486,31 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
       .setFontWeight('bold')
       .setHorizontalAlignment('left');
 
-    // Project Metrics (Cols J-M): Roboto Mono, centered
-    const projMetricsRange = sheet.getRange(10, 10, rightRows.length, 4);
+    // Project Metrics (Cols J-N): Roboto Mono, centered
+    const projMetricsRange = sheet.getRange(10, 10, rightRows.length, 5);
     projMetricsRange
       .setFontFamily(digitsFont)
       .setHorizontalAlignment('center');
 
-    // Progress Column (Col M): bold green accent
-    sheet.getRange(10, 13, rightRows.length, 1)
+    // Completed Column (Col K / Col 11): bold green accent
+    sheet.getRange(10, 11, rightRows.length, 1)
+      .setFontWeight('bold')
+      .setFontColor(colors.GREEN_ACCENT);
+
+    // Completion % Column (Col N / Col 14): bold green accent
+    sheet.getRange(10, 14, rightRows.length, 1)
       .setFontWeight('bold')
       .setFontColor(colors.GREEN_ACCENT);
 
     // Subtle borders on data rows
-    sheet.getRange(10, 9, rightRows.length, 5).setBorder(
+    sheet.getRange(10, 9, rightRows.length, 6).setBorder(
       null, true, true, true, true, true,
       '#e2e8f0',
       SpreadsheetApp.BorderStyle.SOLID
     );
   } else {
-    sheet.getRange(10, 9, 1, 5)
-      .setValues([['No data', 0, 0, 0, '0%']])
+    sheet.getRange(10, 9, 1, 6)
+      .setValues([['No data', 0, 0, 0, 0, '0%']])
       .setFontFamily(textFont)
       .setFontSize(9)
       .setHorizontalAlignment('center');
@@ -551,10 +564,11 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
     'TOTAL',
     totals.total,
     totals.done,
-    totals.pending,
+    totals.active,
+    totals.blocked,
     `${totals.rate}%`
   ];
-  const rightSummaryRange = sheet.getRange(totalRowIndex, 9, 1, 5);
+  const rightSummaryRange = sheet.getRange(totalRowIndex, 9, 1, 6);
   rightSummaryRange
     .setValues([rightSummary])
     .setFontSize(9)
@@ -568,11 +582,12 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
     .setHorizontalAlignment('left');
 
   // Digits: Roboto Mono
-  sheet.getRange(totalRowIndex, 10, 1, 4)
+  sheet.getRange(totalRowIndex, 10, 1, 5)
     .setFontFamily(digitsFont)
     .setHorizontalAlignment('center');
 
-  sheet.getRange(totalRowIndex, 13).setFontColor(colors.GREEN_ACCENT);
+  sheet.getRange(totalRowIndex, 11).setFontColor(colors.GREEN_ACCENT);
+  sheet.getRange(totalRowIndex, 14).setFontColor(colors.GREEN_ACCENT);
 
   rightSummaryRange.setBorder(
     true, null, true, null, null, null,
@@ -680,7 +695,7 @@ function renderTodoSection(sheet, ss, startRow) {
     },
     {
       startCol: 11,
-      numCols: 3,
+      numCols: 4,
       title: '🎯 FOCUS RATIO',
       value: `${focusRatio}%`,
       sub: 'Q1 + Q2 share',
@@ -756,15 +771,21 @@ function renderTodoSection(sheet, ss, startRow) {
  */
 function extractTaskMetrics(ss) {
   const monthSheets = getAllMonthSheets(ss);
+  const dateCol = CONFIG.HEADERS.indexOf('Date');
   const taskCol = CONFIG.HEADERS.indexOf('Task');
   const projectCol = CONFIG.HEADERS.indexOf('Project');
   const statusCol = CONFIG.HEADERS.indexOf('Status');
+
+  const timezone = getTimezone();
+  const today = getToday();
+  const currentMonthSheetName = Utilities.formatDate(today, timezone, 'MMMyy').toUpperCase();
+  const todayDateStr = Utilities.formatDate(today, timezone, CONFIG.DATE_FORMAT || 'MMdd');
 
   const monthlyData = [];
   const projectMap = {};
 
   (CONFIG.LISTS.Projects || []).forEach(proj => {
-    projectMap[proj] = { tasks: 0, done: 0, pending: 0 };
+    projectMap[proj] = { tasks: 0, done: 0, active: 0, blocked: 0, pending: 0 };
   });
 
   let grandTotal = 0;
@@ -773,9 +794,16 @@ function extractTaskMetrics(ss) {
   let grandBlocked = 0;
   let grandPending = 0;
 
+  let todayTotal = 0;
+  let todayDone = 0;
+  let todayActive = 0;
+  let todayBlocked = 0;
+  let todayPending = 0;
+
   monthSheets.forEach(sheet => {
     const sheetName = sheet.getName();
     const displayName = formatMonthDisplayName(sheetName);
+    const isCurrentMonth = sheetName.trim().toUpperCase() === currentMonthSheetName;
     const lastRow = sheet.getLastRow();
 
     let mTotal = 0;
@@ -793,6 +821,7 @@ function extractTaskMetrics(ss) {
         const task = String(row[taskCol] || '').trim();
         if (!task) return;
 
+        const rowDate = dateCol >= 0 ? String(row[dateCol] || '').trim() : '';
         const project = String(row[projectCol] || '').trim();
         const status = String(row[statusCol] || '').trim();
 
@@ -807,13 +836,31 @@ function extractTaskMetrics(ss) {
           mPending++;
         }
 
+        // Today metrics extraction
+        if (isCurrentMonth && (rowDate === todayDateStr || rowDate.endsWith(todayDateStr))) {
+          todayTotal++;
+          if (status === 'Completed') {
+            todayDone++;
+          } else if (status === 'In Progress') {
+            todayActive++;
+          } else if (status === 'Blocked') {
+            todayBlocked++;
+          } else {
+            todayPending++;
+          }
+        }
+
         if (project) {
           if (!projectMap[project]) {
-            projectMap[project] = { tasks: 0, done: 0, pending: 0 };
+            projectMap[project] = { tasks: 0, done: 0, active: 0, blocked: 0, pending: 0 };
           }
           projectMap[project].tasks++;
           if (status === 'Completed') {
             projectMap[project].done++;
+          } else if (status === 'In Progress') {
+            projectMap[project].active++;
+          } else if (status === 'Blocked') {
+            projectMap[project].blocked++;
           } else {
             projectMap[project].pending++;
           }
@@ -841,21 +888,27 @@ function extractTaskMetrics(ss) {
   });
 
   const grandRate = grandTotal > 0 ? Math.round((grandDone / grandTotal) * 100) : 0;
+  const todayRate = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : 0;
 
   const projectData = [];
   Object.keys(projectMap).forEach(proj => {
     const data = projectMap[proj];
     if (data.tasks > 0) {
-      const rate = data.tasks > 0 ? Math.round((data.done / data.tasks) * 100) : 0;
+      const rate = Math.round((data.done / data.tasks) * 100);
       projectData.push({
         project: proj,
         tasks: data.tasks,
         done: data.done,
+        active: data.active,
+        blocked: data.blocked,
         pending: data.pending,
         rate: rate
       });
     }
   });
+
+  // Deterministic sort: tasks count descending, then alphabetically by project name
+  projectData.sort((a, b) => b.tasks - a.tasks || a.project.localeCompare(b.project));
 
   return {
     monthlyData,
@@ -867,6 +920,14 @@ function extractTaskMetrics(ss) {
       blocked: grandBlocked,
       pending: grandPending,
       rate: grandRate
+    },
+    todayTotals: {
+      total: todayTotal,
+      done: todayDone,
+      active: todayActive,
+      blocked: todayBlocked,
+      pending: todayPending,
+      rate: todayRate
     }
   };
 }
@@ -948,23 +1009,24 @@ function getTodoTaskRows(ss) {
 
 /**
  * Applies column widths, freezes the title rows, and trims the sheet
- * down to exactly the 13 columns used by the modern SaaS dashboard.
+ * down to exactly the 14 columns used by the modern SaaS dashboard command center.
  */
 function formatDashboardSheet(sheet, lastRow) {
-  const widths = [
+  const widths = (CONFIG.DIMENSIONS && CONFIG.DIMENSIONS.DASHBOARD_COL_WIDTHS) || [
     130, // Col 1 (A): Month
-    80,  // Col 2 (B): Total
-    80,  // Col 3 (C): Done
-    80,  // Col 4 (D): Active
-    80,  // Col 5 (E): Blocked
-    80,  // Col 6 (F): Pending
-    95,  // Col 7 (G): Progress
-    45,  // Col 8 (H): Spacer Gap
-    150, // Col 9 (I): Project
-    80,  // Col 10 (J): Tasks
-    80,  // Col 11 (K): Done
-    80,  // Col 12 (L): Pending
-    95   // Col 13 (M): Progress
+    75,  // Col 2 (B): Total
+    75,  // Col 3 (C): Done
+    75,  // Col 4 (D): Active
+    75,  // Col 5 (E): Blocked
+    75,  // Col 6 (F): Pending
+    85,  // Col 7 (G): Progress
+    35,  // Col 8 (H): Spacer Gap
+    140, // Col 9 (I): Project
+    75,  // Col 10 (J): Total
+    75,  // Col 11 (K): Completed
+    75,  // Col 12 (L): In Progress
+    75,  // Col 13 (M): Blocked
+    85   // Col 14 (N): Completion %
   ];
 
   widths.forEach((width, index) => {

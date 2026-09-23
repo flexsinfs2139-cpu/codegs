@@ -59,9 +59,25 @@ function getDSRDataForDate(dateStr) {
  */
 function showDSRDialog(targetDate, isToday) {
   const dsrData = compileDSRData(targetDate, isToday);
-  const htmlContent = getDSRDialogHtml(dsrData, isToday);
+  let htmlOutput;
+  try {
+    const template = HtmlService.createTemplateFromFile('04_DSRDialog');
+    template.dsrData = dsrData;
+    template.isToday = isToday;
+    htmlOutput = template.evaluate();
+  } catch (e1) {
+    try {
+      const template = HtmlService.createTemplateFromFile('DSRDialog');
+      template.dsrData = dsrData;
+      template.isToday = isToday;
+      htmlOutput = template.evaluate();
+    } catch (e2) {
+      const htmlContent = getDSRDialogHtml(dsrData, isToday);
+      htmlOutput = HtmlService.createHtmlOutput(htmlContent);
+    }
+  }
 
-  const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
+  htmlOutput
     .setWidth(740)
     .setHeight(590);
 

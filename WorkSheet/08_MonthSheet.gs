@@ -12,25 +12,36 @@ function createCurrentMonthSheet(suppressAlert) {
     'MMMyy'
   ).toUpperCase();
 
-  const existingSheet =
-    ss.getSheetByName(sheetName);
-
-  if (existingSheet) {
-    ss.setActiveSheet(existingSheet);
-
-    if (!suppressAlert) {
-      SpreadsheetApp.getUi().alert(
-        `${sheetName} already exists.`
-      );
-    }
-
-    return;
-  }
+  let sheet = ss.getSheetByName(sheetName);
+  const isExisting = Boolean(sheet);
 
   ensureListsSheet(ss);
 
-  const sheet =
-    ss.insertSheet(sheetName);
+  if (isExisting) {
+    // Idempotent upgrade: preserve existing data, refresh headers & rules
+    sheet
+      .getRange(CONFIG.HEADER_ROW, 1, 1, CONFIG.HEADERS.length)
+      .setValues([CONFIG.HEADERS]);
+
+    formatWorkTracker(sheet);
+    setupDropdowns(sheet);
+    setupConditionalFormatting(sheet);
+    setupWeekendFormatting(sheet);
+    sheet.setFrozenRows(1);
+    setSheetGridlinesHidden(sheet, true);
+
+    ss.setActiveSheet(sheet);
+
+    if (!suppressAlert) {
+      SpreadsheetApp.getUi().alert(
+        `${sheetName} verified and refreshed successfully.`
+      );
+    }
+
+    return sheet;
+  }
+
+  sheet = ss.insertSheet(sheetName);
 
   createMonthRows(
     sheet,
@@ -51,6 +62,7 @@ function createCurrentMonthSheet(suppressAlert) {
   setupWeekendFormatting(sheet);
 
   sheet.setFrozenRows(1);
+  setSheetGridlinesHidden(sheet, true);
 
   ss.setActiveSheet(sheet);
 
@@ -59,6 +71,8 @@ function createCurrentMonthSheet(suppressAlert) {
       `${sheetName} created successfully.`
     );
   }
+
+  return sheet;
 }
 
 

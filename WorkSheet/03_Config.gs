@@ -1,29 +1,37 @@
+// ============================================================
+// CONFIG.GS — CENTRAL APPLICATION CONFIGURATION
+// ============================================================
+
 const CONFIG = {
+  // Core Operational Settings
   HEADER_ROW: 1,
   DATE_FORMAT: 'MMdd',
   DEFAULT_TASKS_PER_DAY: 1,
+
+  // Sheet Names & Aliases
+  SHEETS: {
+    LISTS: 'Lists',
+    TODO: 'Todo',
+    DASHBOARD: 'Dashboard',
+    DSR: 'DSR'
+  },
   LISTS_SHEET_NAME: 'Lists',
   TODO_SHEET_NAME: 'Todo',
+  DASHBOARD_SHEET_NAME: 'Dashboard',
+
+  // Todo / Eisenhower Structure Settings
   TODO_DROPDOWN_ROWS: 200,
   TODO_STAT_ROW: 1,
   TODO_HEADER_ROW: 2,
   TODO_FIRST_DATA_ROW: 3,
-  DASHBOARD_SHEET_NAME: 'Dashboard',
 
+  // Design System Typography
   FONTS: {
     TEXT: 'Varela Round',
     DIGITS: 'Roboto Mono'
   },
 
-  TODO_HEADERS: [
-    'Task Name',
-    'Project',
-    'Q1: Do',
-    'Q2: Schedule',
-    'Q3: Delegate',
-    'Q4: Don\'t Do'
-  ],
-
+  // Sheet Column Headers
   HEADERS: [
     'Date',
     'Day',
@@ -34,11 +42,55 @@ const CONFIG = {
     'Status'
   ],
 
+  TODO_HEADERS: [
+    'Task Name',
+    'Project',
+    'Q1: Do',
+    'Q2: Schedule',
+    'Q3: Delegate',
+    'Q4: Don\'t Do'
+  ],
+
+  // Layout Dimensions & Sizing
+  DIMENSIONS: {
+    MONTH_COL_WIDTHS: [75, 60, 130, 340, 130, 100, 125],
+    HEADER_ROW_HEIGHT: 28,
+    DATA_ROW_HEIGHT: 42,
+    TODO_COL_WIDTHS: [340, 140, 120, 120, 120, 120],
+    TODO_STAT_ROW_HEIGHT: 32,
+    TODO_HEADER_ROW_HEIGHT: 28,
+    DASHBOARD_COL_WIDTHS: [130, 75, 75, 75, 75, 75, 85, 35, 140, 75, 75, 75, 75, 85],
+    DASHBOARD_COLUMNS_COUNT: 14
+  },
+
+  // Restrained Modern SaaS Palette
   COLORS: {
-    HEADER: '#d9ead3',
-    BORDER: '#d9d9d9',
-    STATS_BG: '#f8f9fa',
+    HEADER_BG: '#f8fafc',
+    HEADER_TEXT: '#0f172a',
+    HEADER: '#f8fafc', // Backwards compatibility
+    BORDER: '#cbd5e1',
+    BORDER_LIGHT: '#e2e8f0',
+    STATS_BG: '#f8fafc',
     STATS_BORDER: '#e2e8f0',
+
+    // Semantic Status Colors
+    STATUS: {
+      COMPLETED: { bg: '#f0fdf4', text: '#15803d', border: '#86efac' },
+      IN_PROGRESS: { bg: '#eff6ff', text: '#1d4ed8', border: '#93c5fd' },
+      BLOCKED: { bg: '#fef2f2', text: '#b91c1c', border: '#fca5a5' },
+      PENDING: { bg: '#f8fafc', text: '#475569', border: '#cbd5e1' },
+      CANCELLED: { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' }
+    },
+
+    // Semantic Priority Colors
+    PRIORITY: {
+      URGENT: { bg: '#fef2f2', text: '#b91c1c' },
+      HIGH: { bg: '#fff7ed', text: '#c2410c' },
+      MEDIUM: { bg: '#fefce8', text: '#854d0e' },
+      LOW: { bg: '#f8fafc', text: '#64748b' }
+    },
+
+    // Eisenhower Matrix Quadrant Colors
     Q1_BG: '#fce8e6',
     Q1_TEXT: '#c5221f',
     Q2_BG: '#e8f0fe',
@@ -49,10 +101,11 @@ const CONFIG = {
     Q4_TEXT: '#5f6368'
   },
 
+  // SaaS Command Center Dashboard Configuration
   DASHBOARD: {
     TITLE: '⚡ WORK & PROJECT COMMAND CENTER',
-    VERSION: 'Modern SaaS Engine v3.0',
-    COLUMNS_COUNT: 13,
+    VERSION: 'Modern SaaS Engine v4.0',
+    COLUMNS_COUNT: 14,
     COLORS: {
       CARD_TOTAL_BG: '#eff6ff',
       CARD_TOTAL_BORDER: '#2563eb',
@@ -88,6 +141,7 @@ const CONFIG = {
     }
   },
 
+  // Reference Lists & Validation Options
   LISTS: {
     Projects: [
       'Clinkio',

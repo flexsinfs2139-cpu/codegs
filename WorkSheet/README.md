@@ -1,6 +1,6 @@
-# WorkSheet — Automated Work & Task Tracker for Google Sheets
+# WorkSheet — Modern SaaS Work & Task Tracker for Google Sheets
 
-An automated, modular Google Apps Script solution designed to manage daily tasks, projects, priorities, and statuses directly inside Google Sheets. It provides monthly calendar sheet generation, centralized validation lists with protected reference data, custom typography and layout formatting, conditional formatting for priorities and statuses, weekend row highlights, and custom toolbar menus.
+An automated, modular Google Apps Script application transforming Google Sheets into a **lightweight, modern SaaS-style Work Tracker** (Linear + Notion aesthetic). It features dynamic monthly calendar sheet generation, a 14-column executive Command Center Dashboard, an Eisenhower Matrix Todo tracker with live formula metrics, single-selection quadrant radio checkboxes, Daily Status Report (DSR) automation, centralized protected reference lists, and standalone production HTML modal dialogs.
 
 ---
 
@@ -8,304 +8,249 @@ An automated, modular Google Apps Script solution designed to manage daily tasks
 
 - [Overview](#overview)
 - [Architecture & File Structure](#architecture--file-structure)
-- [Installation & Quick Start](#installation--quick-start)
-- [Core Features & Usage](#core-features--usage)
-  - [1. Monthly Sheet Generation](#1-monthly-sheet-generation)
-  - [2. Centralized Lists & Named Ranges](#2-centralized-lists--named-ranges)
-  - [3. Dynamic Task Management](#3-dynamic-task-management)
-  - [4. Formatting & Visual Hierarchy](#4-formatting--visual-hierarchy)
-  - [5. Conditional Formatting & Weekend Highlighting](#5-conditional-formatting--weekend-highlighting)
-  - [6. Custom Toolbar Menus](#6-custom-toolbar-menus)
+- [Master Setup (`setupWorkTracker`)](#master-setup-setupworktracker)
+- [Core Features & SaaS UX](#core-features--saas-ux)
+  - [1. Executive Command Center Dashboard (14 Columns)](#1-executive-command-center-dashboard-14-columns)
+  - [2. Eisenhower Matrix Todo Tracker](#2-eisenhower-matrix-todo-tracker)
+  - [3. Monthly Task Tracking & Quick Entry](#3-monthly-task-tracking--quick-entry)
+  - [4. Daily Status Report (DSR) Engine](#4-daily-status-report-dsr-engine)
+  - [5. Visual Calendar Picker](#5-visual-calendar-picker)
+  - [6. Unified WorkSheet Toolbar Menu](#6-unified-worksheet-toolbar-menu)
+- [Design System & Typography](#design-system--typography)
 - [Configuration Guide (`03_Config.gs`)](#configuration-guide-03_configgs)
-- [Workflow & Call Hierarchy](#workflow--call-hierarchy)
-- [Developer Notes & Observations](#developer-notes--observations)
+- [Trigger Architecture & Real-Time Sync](#trigger-architecture--real-time-sync)
+- [Developer Guidelines](#developer-guidelines)
 
 ---
 
 ## Overview
 
-The **WorkSheet** project transforms a Google Sheet into an organized work-tracking system. Rather than manually copying sheets each month or setting up data validation rules by hand, the script handles sheet creation, dates population for all days in the current month, named ranges, data validation dropdowns, row heights, column widths, and conditional color-coding automatically.
+WorkSheet eliminates the friction of manual spreadsheet maintenance. It provisions a complete, interconnected productivity suite inside Google Sheets:
+- **Command Center Dashboard**: Live high-level KPI cards answering what is active *Today* vs *This Month*, side-by-side Monthly Breakdown and 6-column Project Performance tables, and Eisenhower Todo statistics.
+- **Fast Batch Task Logging**: Paste multi-line tasks or select single dates with automatic `Pending` defaults, keyboard shortcuts (`Ctrl + Enter`), and `+ Add & Next Project` workflow.
+- **Eisenhower Decision Matrix**: Quadrant checkboxes (`Q1: Do`, `Q2: Schedule`, `Q3: Delegate`, `Q4: Don't Do`) with mutually-exclusive radio behavior and frozen live stats bar.
+- **Single Master Setup**: Idempotent `setupWorkTracker()` entry point that verifies, upgrades, and configures the system without data loss or duplicate triggers.
 
 ---
 
 ## Architecture & File Structure
 
-The project is structured into 13 modular `.gs` files:
+The codebase is organized into 14 modular Google Apps Script files and 3 standalone production HTML templates:
 
-```
+```text
 WorkSheet/
-├── 00_Code.gs                  # High-level entry points and orchestration routines
-├── 01_CalendarPicker.gs        # Interactive visual calendar date picker engine for Tasks and DSR
-├── 02_ConditionalFormatting.gs # Priority, status, weekend row, and Eisenhower Matrix conditional rules
-├── 03_Config.gs                # Central configuration for headers, lists, colors, dimensions
-├── 04_DSR.gs                   # Daily Status Report generator, parser, and interactive modal dialog
-├── 05_Formatting.gs            # Visual layout, font hierarchy, column widths, row heights, borders
-├── 06_Lists.gs                 # Validation reference sheet generator, named ranges, sheet protection
-├── 07_Menu.gs                  # Custom UI menus registered via `onOpen()`
-├── 08_MonthSheet.gs            # Monthly sheet creation, day row generation, and layout assembly
-├── 09_Tasks.gs                 # Task-level operations (row insertion, dropdown validation, task clearing)
-├── 10_Utils.gs                 # Helper utilities for timezone, dates, sheet trimming, and ranges
-├── 11_Todo.gs                  # Eisenhower Matrix Todo tracker with checkboxes and live stats row
-├── 12_Dashboard.gs             # Modern SaaS Command Center dashboard with live KPI cards and tables
-├── 13_SampleData.gs            # Realistic dummy data generator for Month, Todo, and Dashboard
+├── 00_Code.gs                  # Master setupWorkTracker() pipeline and centralized triggers (onEdit, onChange)
+├── 01_CalendarPicker.gs        # Controller for interactive visual calendar date picker
+├── 01_CalendarPickerDialog.html # Production modal dialog UI for calendar date selection
+├── 02_ConditionalFormatting.gs # Semantic status, priority, weekend, and Eisenhower formatting rules
+├── 03_Config.gs                # Central configuration: tokens, schemas, dimensions, colors, fonts
+├── 04_DSR.gs                   # Daily Status Report generator, parser, and clipboard exporter
+├── 04_DSRDialog.html           # Production modal dialog UI for DSR reports with date switching
+├── 05_Formatting.gs            # Visual styling, layout dimensions, borders, and safe gridline hiding
+├── 06_Lists.gs                 # Validation reference lists, named ranges, and sheet protection
+├── 07_Menu.gs                  # Single unified 'WorkSheet' menu with submenus and direct openers
+├── 08_MonthSheet.gs            # Idempotent monthly sheet creation and non-destructive refresh
+├── 09_Tasks.gs                 # Task operations, batch insertion, dropdown rules, and modal dialog
+├── 09_TaskDialog.html          # Production modal dialog UI for multi-task batch entry
+├── 10_Utils.gs                 # Helper utilities: timezones, dates, sheet trimming, safe gridlines
+├── 11_Todo.gs                  # Eisenhower Matrix Todo tracker with live stats bar & radio checkboxes
+├── 12_Dashboard.gs             # Modern SaaS Command Center dashboard (14 columns, live metrics)
+├── 13_SampleData.gs            # 1-click realistic dummy data seeding engine
+└── README.md                   # Complete developer & user documentation
 ```
 
 ### File Responsibilities
 
-| File | Primary Functions | Description |
+| File | Primary Functions / Role | Description |
 | :--- | :--- | :--- |
-| **`00_Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Serves as the operational entry point coordinating setup across modules and dispatching global workbook triggers (`onEdit`, `onChange`). |
-| **`01_CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` | Provides an interactive monthly visual calendar widget to visually select dates for Tasks and DSR workflows without text prompts. |
-| **`02_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting`, `setupTodoConditionalFormatting` | Creates color-coded conditional formatting rules for Statuses, Priorities, weekend rows, and Eisenhower Matrix quadrants. |
-| **`03_Config.gs`** | `CONFIG` object | Stores global variables, header names, colors, font families (`Varela Round`, `Roboto Mono`), and array values for Projects, Categories, Priorities, Statuses, and Eisenhower Matrix quadrants. |
-| **`04_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
-| **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for numbers/dates, `Varela Round` for headers and text), alignments, column widths, row heights, and borders. |
-| **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
-| **`07_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, `DSR`, and `Dashboard`. |
-| **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
-| **`09_Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `saveTasksBatch`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
-| **`10_Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday`, `hideGridlinesAllSheets`, `showGridlinesAllSheets` | Common helper methods for trimming extra grid cells, fetching sheet context with timezone handling, and toggling workbook gridlines. |
-| **`11_Todo.gs`** | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns`, `handleTodoQuadrantExclusiveSelect` | Manages the Todo sheet with an Eisenhower Matrix structure: Row 1 live stats row (Total, Q1, Q2, Q3, Q4), Row 2 headers, and native checkboxes with single-selection radio logic. |
-| **`12_Dashboard.gs`** | `refreshDashboard`, `updateDashboardOnChange`, `handleDashboardTodoEdit`, `renderDashboardHeader`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern SaaS Command Center dashboard: 6 Work & Monthly KPI cards, side-by-side Monthly Breakdown and Project Performance tables, and 6 Eisenhower Matrix Todo stats cards. Automatically updates on any workbook change. |
-| **`13_SampleData.gs`** | `populateDummyData`, `addDummyData`, `populateTodoDummyData`, `populateMonthDummyData` | Seeds realistic sample data across Month sheet (21 tasks with diverse statuses) and Todo sheet (12 Eisenhower tasks) with live dashboard refresh. |
+| **`00_Code.gs`** | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Primary operational entry point. Idempotent master setup routine and workbook trigger router. |
+| **`01_CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar` | Backend controller for the visual calendar picker; loads `01_CalendarPickerDialog.html` with resilient fallback. |
+| **`01_CalendarPickerDialog.html`** | Calendar Modal UI | Standalone visual date picker modal with `Varela Round` and `Roboto Mono` fonts, keyboard navigation, and double-click date selection. |
+| **`02_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `setupWeekendFormatting`, `setupTodoConditionalFormatting` | Applies semantic pastel tags for Statuses, Priorities, weekend rows, and Eisenhower Matrix quadrants. |
+| **`03_Config.gs`** | `CONFIG` object | Central configuration for dimensions, typography, colors, headers, and reference lists. |
+| **`04_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles daily status reports categorized by project with clipboard copy, .txt download, and sheet logging. |
+| **`04_DSRDialog.html`** | DSR Modal UI | Interactive DSR modal dialog with live calendar date switcher and 1-click export actions. |
+| **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies SaaS typography, subtle `#cbd5e1` borders, dimensions, and safe gridline hiding. |
+| **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
+| **`07_Menu.gs`** | `onOpen`, `openDashboard`, `openTodoSheet` | Injects the unified `WorkSheet` toolbar menu with `Tasks`, `DSR`, and `Advanced` submenus. |
+| **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Idempotently creates or refreshes monthly task sheets without deleting existing task data. |
+| **`09_Tasks.gs`** | `fillTaskForToday`, `fillTaskForSelectedDate`, `saveTasksBatch`, `clearTasks` | Controller for fast multi-task batch logging; loads `09_TaskDialog.html` with resilient fallback. |
+| **`09_TaskDialog.html`** | Task Entry Modal UI | Clean batch task modal with project/category/priority selection, `Ctrl + Enter` shortcut, and `+ Add & Next Project` workflow. |
+| **`10_Utils.gs`** | `setSheetGridlinesHidden`, `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Core utilities including safe gridline toggling that avoids unsupported Google Sheets API errors. |
+| **`11_Todo.gs`** | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `handleTodoQuadrantExclusiveSelect` | Eisenhower Matrix Todo tracker with Row 1 live formula counters and mutually exclusive radio checkboxes. |
+| **`12_Dashboard.gs`** | `refreshDashboard`, `updateDashboardOnChange`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern 14-column SaaS Command Center aggregating monthly and today's metrics across the entire workbook. |
+| **`13_SampleData.gs`** | `populateDummyData`, `populateTodoDummyData`, `populateMonthDummyData` | Seeds 21 realistic engineering tasks and 12 Eisenhower matrix items with 1 click. |
 
 ---
 
-## Installation & Quick Start
+## Master Setup (`setupWorkTracker`)
 
-### 1. Link to Google Sheets
-1. Create or open an existing **Google Spreadsheet**.
-2. Go to **Extensions** > **Apps Script** in the top menu.
-3. Rename the Apps Script project to `WorkSheet`.
-4. Copy all 13 `.gs` files into the Apps Script editor with their matching names:
-   - `00_Code.gs`
-   - `01_CalendarPicker.gs`
-   - `02_ConditionalFormatting.gs`
-   - `03_Config.gs`
-   - `04_DSR.gs`
-   - `05_Formatting.gs`
-   - `06_Lists.gs`
-   - `07_Menu.gs`
-   - `08_MonthSheet.gs`
-   - `09_Tasks.gs`
-   - `10_Utils.gs`
-   - `11_Todo.gs`
-   - `12_Dashboard.gs`
-   - `13_SampleData.gs`
+`setupWorkTracker(suppressAlert)` in [`00_Code.gs`](./00_Code.gs) is the **single master entry point** for provisioning, repairing, or upgrading the entire system.
 
-*(Alternatively, use [Google Clasp](https://github.com/google/clasp) to push the local files directly to your Apps Script container).*
-
-### 2. First-Time Setup & Dummy Data
-1. In the Apps Script editor, select `initializeWorkTracker` from the function dropdown and click **Run**.
-2. Grant the required Google Workspace permissions when prompted.
-3. The script will silently initialize the entire tracker without any blocking popups:
-   - Create and protect the `Lists` reference sheet with all named ranges.
-   - Create and format the `Todo` sheet with the Eisenhower Matrix (Row 1 live stats row, Row 2 headers, radio-button checkboxes, and Project dropdown).
-   - Create the current month's tracker sheet (e.g., `SEP26`) with daily task rows, formatting, and dropdown validations.
-   - Provision the Command Center Dashboard.
-4. Refresh the Google Sheet tab. The custom menus (`Month Sheet`, `Setup`, `Tasks`, `DSR`, `Dashboard`) will appear in the top toolbar.
-5. To instantly populate realistic sample data, select **Setup** > **Populate Dummy Data** from the toolbar menu.
+### Key Behaviors:
+1. **Idempotent**: Safe to run once or ten times. It never duplicates sheets, triggers, named ranges, or formatting rules.
+2. **Non-Destructive**: Strictly preserves existing user tasks and entries on Month and Todo sheets.
+3. **Trigger Verification**: Detects existing triggers via `ScriptApp.getProjectTriggers()` to prevent duplicate registrations.
+4. **Structured Logging**: Outputs clean milestone logs in the Apps Script execution log:
+   ```text
+   [WorkSheet] Setup started
+   [WorkSheet] Lists verified
+   [WorkSheet] Todo verified
+   [WorkSheet] Current month verified
+   [WorkSheet] Dashboard verified
+   [WorkSheet] Validations & Formatting configured
+   [WorkSheet] Triggers verified
+   [WorkSheet] Setup completed
+   ```
 
 ---
 
-## Core Features & Usage
+## Core Features & SaaS UX
 
-### 1. Monthly Sheet Generation
-- **Trigger**: Click **Month Sheet** > **Create Current Month**.
-- **Behavior**:
-  - Automatically calculates the sheet name using the pattern `MMMyy` (e.g. `SEP26`, `OCT26`).
-  - Checks if the sheet already exists to prevent accidental overwriting.
-  - Automatically ensures the `Lists` sheet exists before generating month data.
-  - Creates rows for all days in the month (e.g., 28 to 31 days) with `CONFIG.DEFAULT_TASKS_PER_DAY` tasks per day.
-  - Default status for all rows is set to `Pending`. The `Notes` column is omitted for maximum speed and simplicity.
-  - Trims all unused columns (beyond column G) and unused rows to maintain high sheet performance.
-  - Freezes the header row.
+### 1. Executive Command Center Dashboard (14 Columns)
+The Dashboard serves as the central command center:
+- **Top Metadata Bar**: Displays live timestamp, engine version, and system status.
+- **6 Modern SaaS KPI Cards**:
+  - `TOTAL TASKS`: Overall tasks across all months + subtitle with tasks logged *Today*.
+  - `COMPLETED`: Total delivered tasks + subtitle with tasks completed *Today*.
+  - `IN PROGRESS`: Total active pipeline + subtitle with tasks in progress *Today*.
+  - `BLOCKED`: Total blockers + subtitle with blockers *Today*.
+  - `PENDING`: Total open backlog + subtitle with pending tasks *Today*.
+  - `COMPLETION RATE`: Grand completion percentage + subtitle with today's rate.
+- **Side-by-Side Analytics Section (14 Columns)**:
+  - **Monthly Breakdown (Cols 1–7 / A–G)**: `Month`, `Total`, `Done`, `Active`, `Blocked`, `Pending`, `Progress`.
+  - **Spacer Gap (Col 8 / H)**: 35px subtle visual separator.
+  - **Project Performance (Cols 9–14 / I–N)**: `Project`, `Total`, `Completed`, `In Progress`, `Blocked`, `Completion %`. Sorted deterministically by task volume and alphabetical order.
+  - **Summary Totals Row**: Centered monospaced totals with green delivery rate highlights.
+- **Eisenhower Matrix Todo Command Section**:
+  - 6 dedicated KPI cards: `TOTAL TODOS`, `🔴 Q1: DO`, `🔵 Q2: SCHEDULE`, `🟡 Q3: DELEGATE`, `⚪ Q4: DON'T DO`, and `🎯 FOCUS RATIO` (Q1+Q2 share).
+- **Clean Canvas**: Seamless white surface with gridlines safely hidden via `setSheetGridlinesHidden`.
 
-### 2. Centralized Lists & Named Ranges
-- All dropdown options are stored in the `Lists` sheet.
-- **Named Ranges Created**:
-  - `Projects` (Column A)
-  - `Categories` (Column B)
-  - `Priorities` (Column C)
-  - `Statuses` (Column D)
-- **Protection**: The `Lists` sheet is automatically trimmed to fit exact list items and locked against editing to prevent accidental alterations.
+### 2. Eisenhower Matrix Todo Tracker
+The dedicated `Todo` sheet implements the Eisenhower decision framework:
+- **Row 1 Live Stats Bar**: Frozen at the top displaying real-time formula-driven task counters for `Total Tasks`, `Q1`, `Q2`, `Q3`, and `Q4`.
+- **Row 2 Headers**: `Task Name`, `Project`, `Q1: Do`, `Q2: Schedule`, `Q3: Delegate`, `Q4: Don't Do`.
+- **Mutually Exclusive Radio Checkboxes**: When a quadrant checkbox is ticked, `onEdit(e)` automatically unticks any previous quadrant for that row.
+- **Project Dropdown**: Validated against the `Lists` sheet.
 
-### 3. Dynamic Task Management & Quick Entry
-- **Fill Task for Today**:
-  - Menu: **Tasks** > **Fill task for today**.
-  - Opens a streamlined, interactive modal dialog pre-set to today's date.
-  - Select your **Project**, **Category**, and **Priority** once.
-  - Status is automatically **Pending** (no input needed).
-  - Notes are not requested, keeping input friction to zero.
-  - Enter or paste one or multiple tasks in the textarea (supports bullet points, dashes, or numbered lists).
-  - Use **Ctrl + Enter** to quickly submit.
-  - Click **+ Add & Next Project** to save tasks and immediately log tasks for another project without closing the dialog.
-  - The script automatically writes the first task into the existing date row and inserts additional rows below it with the same Date and Day, complete with borders, fonts, and dropdown validations.
-- **Fill Task for Selected Date in the Current Month**:
-  - Menu: **Tasks** > **Fill task for selected date in the current month**.
-  - Opens a visual, interactive monthly calendar picker where you can click any day (or double-click to proceed immediately) to enter tasks for that date.
-  - You can also switch days directly inside the Task Entry dialog via the embedded calendar date picker.
+### 3. Monthly Task Tracking & Quick Entry
+- **Standard Schema**: `Date`, `Day`, `Project`, `Task`, `Category`, `Priority`, `Status`.
+- **Fast Batch Task Logging Modal (`09_TaskDialog.html`)**:
+  - Accessible via **WorkSheet** > **Tasks** > **Fill Task for Today** or **Fill Task for Selected Date**.
+  - Select Project, Category, and Priority once; enter or paste multiple tasks into a textarea (one per line).
+  - Automatically defaults to `Pending` status.
+  - Includes `Ctrl + Enter` shortcut and `+ Add & Next Project` continuous entry.
+- **Safe Row Insertion**: Fills the first empty task row for that date or inserts subsequent rows preserving date formatting and dropdown rules.
 
-### 4. Formatting & Visual Hierarchy
-- **Header**: Background color `#d9ead3` (soft green), bold `Varela Round` text, centered, height 28px.
-- **Date (Column A)**: Monospaced `Roboto Mono`, bold, centered.
-- **Day (Column B)**: `Varela Round`, bold, centered.
-- **Project (Column C)**: `Varela Round`, centered, width 130px.
-- **Task (Column D)**: `Varela Round`, left-aligned, width 340px, text wrapped.
-- **Category, Priority, Status (Columns E, F, G)**: `Varela Round`, centered, data-validation dropdowns.
-- **Data Rows**: Uniform row height of 42px with `#d9d9d9` solid borders.
+### 4. Daily Status Report (DSR) Engine
+- Accessible via **WorkSheet** > **DSR** > **Generate DSR for Today** or **Generate DSR for Selected Date**.
+- Automatically groups tasks by project into:
+  1. `Tasks Completed`
+  2. `Work in Progress`
+  3. `Blockers / Issues`
+  4. `Plan for Next Working Day`
+- Styled interactive modal (`04_DSRDialog.html`) with live date switching, **Copy to Clipboard**, **Save to Sheet**, and **Download .txt**.
 
-### 5. Conditional Formatting & Weekend Highlighting
-- **Priorities (Column F)**:
-  - `Urgent`: Red text (`#ff0000`) on light red background (`#fce8e6`)
-  - `High`: Dark orange text (`#b45f06`) on light yellow background (`#fff2cc`)
-  - `Medium`: Olive text (`#7f6000`) on light yellow background (`#fff2cc`)
-- **Statuses (Column G)**:
-  - `In Progress`: Blue text (`#1155cc`) on soft blue background (`#cfe2f3`)
-  - `Completed`: Green text (`#008000`) on soft green background (`#d9ead3`)
-  - `Blocked`: Red text (`#cc0000`) on soft red background (`#f4cccc`)
-  - `Cancelled`: Grey text (`#666666`) on light grey background (`#eeeeee`)
-- **Weekend Rows (Columns A to G)**:
-  - `Saturday`: Grey text (`#6b7280`) on light grey background (`#f3f4f6`)
-  - `Sunday`: Red text (`#cc0000`) on soft red background (`#fce8e6`)
+### 5. Visual Calendar Picker
+- Accessible via **WorkSheet** > **Tasks** > **Fill Task for Selected Date** or **WorkSheet** > **DSR** > **Generate DSR for Selected Date**.
+- Interactive calendar widget (`01_CalendarPickerDialog.html`) allowing date selection with arrow keys, click, or double-click to proceed directly.
 
-### 6. Custom Toolbar Menus
+### 6. Unified WorkSheet Toolbar Menu
+Consolidated single top-level menu hierarchy:
 
-| Menu | Item | Target Function | Description |
-| :--- | :--- | :--- | :--- |
-| **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days, default Pending statuses, and styling. |
-| **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
-| **Setup** | Create Todo Sheet | `createTodoSheet` | Creates or refreshes the Todo sheet with Eisenhower Matrix (Row 1 live stats, Row 2 headers, checkboxes, and project dropdown). |
-| **Tasks** | Fill task for today | `fillTaskForToday` | Opens the fast modal dialog to enter single/multiple tasks for today by project, category, and priority. |
-| **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Opens the visual interactive calendar to choose any date, then opens the task entry dialog with automatic Pending status. |
-| **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
-| **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Opens the visual interactive calendar to choose any date and generate the DSR, with in-modal date switching support. |
-| **Dashboard** | Refresh Dashboard | `refreshDashboard` | Rebuilds the central dashboard showing Todo tasks with Eisenhower quadrant counts & checkboxes, and month status breakdown. |
+```text
+WorkSheet
+├── ⚡ Setup / Repair Work Tracker  → setupWorkTracker()
+├── 📊 Open Dashboard              → openDashboard()
+├── 🎯 Open Todo                   → openTodoSheet()
+├── ─────────────────────────────
+├── Tasks ▶
+│   ├── Fill Task for Today        → fillTaskForToday()
+│   └── Fill Task for Selected Date→ fillTaskForSelectedDate()
+├── DSR ▶
+│   ├── Generate DSR for Today     → generateDSRForToday()
+│   └── Generate DSR for Selected Date → generateDSRForSelectedDate()
+├── ─────────────────────────────
+└── Advanced ▶
+    ├── Refresh Dashboard          → refreshDashboard()
+    ├── Rebuild Lists              → rebuildLists()
+    ├── Create Current Month Sheet → createCurrentMonthSheet()
+    ├── Enforce Single Todo Quadrant→ sanitizeAllTodoQuadrants()
+    └── Populate Dummy Data        → populateDummyData()
+```
+
+---
+
+## Design System & Typography
+
+- **Typography**:
+  - `Varela Round`: Primary UI font for titles, section headers, labels, and text descriptions.
+  - `Roboto Mono`: Monospaced font for all dates, numbers, KPI values, metrics, and percentages.
+- **Surfaces & Borders**: Soft near-white surfaces (`#f8fafc`), subtle borders (`#cbd5e1` / `#e2e8f0`).
+- **Semantic Palette**:
+  - `Completed`: `#f0fdf4` fill, `#15803d` text
+  - `In Progress`: `#eff6ff` fill, `#1d4ed8` text
+  - `Blocked`: `#fef2f2` fill, `#b91c1c` text
+  - `Pending`: `#f8fafc` fill, `#475569` text
+  - `Cancelled`: `#f1f5f9` fill, `#64748b` text
 
 ---
 
 ## Configuration Guide (`03_Config.gs`)
 
-Modify `03_Config.gs` to tailor the tracker to your organization's workflow:
+All system parameters live centrally in `CONFIG` within [`03_Config.gs`](./03_Config.gs):
 
 ```javascript
 const CONFIG = {
   HEADER_ROW: 1,
   DATE_FORMAT: 'MMdd',
-  DEFAULT_TASKS_PER_DAY: 1,      // Number of rows generated per day
-  LISTS_SHEET_NAME: 'Lists',     // Name of reference sheet
-  TODO_SHEET_NAME: 'Todo',
-  TODO_DROPDOWN_ROWS: 200,
-  TODO_STAT_ROW: 1,
-  TODO_HEADER_ROW: 2,
-  TODO_FIRST_DATA_ROW: 3,
-  DASHBOARD_SHEET_NAME: 'Dashboard',
+  DEFAULT_TASKS_PER_DAY: 1,
 
-  TODO_HEADERS: [
-    'Task Name',
-    'Project',
-    'Q1: Do',
-    'Q2: Schedule',
-    'Q3: Delegate',
-    'Q4: Don\'t Do'
-  ],
+  SHEETS: {
+    LISTS: 'Lists',
+    TODO: 'Todo',
+    DASHBOARD: 'Dashboard',
+    DSR: 'DSR'
+  },
 
-  HEADERS: [
-    'Date', 'Day', 'Project', 'Task', 'Category', 'Priority', 'Status'
-  ],
+  FONTS: {
+    TEXT: 'Varela Round',
+    DIGITS: 'Roboto Mono'
+  },
 
-  COLORS: {
-    HEADER: '#d9ead3',
-    BORDER: '#d9d9d9',
-    STATS_BG: '#f8f9fa',
-    STATS_BORDER: '#e2e8f0',
-    Q1_BG: '#fce8e6',
-    Q1_TEXT: '#c5221f',
-    Q2_BG: '#e8f0fe',
-    Q2_TEXT: '#1a73e8',
-    Q3_BG: '#fef7e0',
-    Q3_TEXT: '#b06000',
-    Q4_BG: '#f1f3f4',
-    Q4_TEXT: '#5f6368'
+  DIMENSIONS: {
+    MONTH_COL_WIDTHS: [75, 60, 130, 340, 130, 100, 125],
+    HEADER_ROW_HEIGHT: 28,
+    DATA_ROW_HEIGHT: 42,
+    TODO_COL_WIDTHS: [340, 140, 120, 120, 120, 120],
+    DASHBOARD_COL_WIDTHS: [130, 75, 75, 75, 75, 75, 85, 35, 140, 75, 75, 75, 75, 85],
+    DASHBOARD_COLUMNS_COUNT: 14
   },
 
   LISTS: {
-    Projects: [
-      'Clinkio', 'Surfari', 'Workbench', 'Memryx', 'DroidLens', 'Other'
-    ],
-    Categories: [
-      'Development', 'Bug Fix', 'UI/UX', 'API', 'Testing',
-      'Research', 'Deployment', 'Meeting', 'Other'
-    ],
-    Priorities: [
-      'Low', 'Medium', 'High', 'Urgent'
-    ],
-    Statuses: [
-      'Pending', 'In Progress', 'Blocked', 'Completed', 'Cancelled'
-    ]
+    Projects: ['Clinkio', 'Surfari', 'Workbench', 'Memryx', 'DroidLens', 'Other'],
+    Categories: ['Development', 'Bug Fix', 'UI/UX', 'API', 'Testing', 'Research', 'Deployment', 'Meeting', 'Other'],
+    Priorities: ['Low', 'Medium', 'High', 'Urgent'],
+    Statuses: ['Pending', 'In Progress', 'Blocked', 'Completed', 'Cancelled']
   }
 };
 ```
 
-> **Note**: After modifying values inside `CONFIG.LISTS`, execute **Setup** > **Create Lists Sheet** or call `rebuildLists()` to update the `Lists` sheet and refresh the named ranges.
+---
+
+## Trigger Architecture & Real-Time Sync
+
+1. **Centralized Router in `00_Code.gs`**:
+   - `onEdit(e)` simple trigger coordinates `handleTodoQuadrantExclusiveSelect(e)` and `updateDashboardOnChange(e)`.
+   - `onChange(e)` installable trigger listens for structural sheet changes.
+2. **Duplicate Prevention**: `setupTriggers(ss)` checks `ScriptApp.getProjectTriggers()` to guarantee only one `onChange` trigger exists.
+3. **Silent Execution**: Background updates run with `suppressAlert = true` and `keepActiveSheet = true` so active user workflows are never interrupted.
 
 ---
 
-## Workflow & Call Hierarchy
+## Developer Guidelines
 
-```mermaid
-flowchart TD
-    A["onOpen()"] --> B["Build UI Menus<br/>(Month Sheet, Setup, Tasks, DSR)"]
-    
-    C["createCurrentMonthSheet()"] --> D["ensureListsSheet()"]
-    C --> E["insertSheet(sheetName)"]
-    C --> F["createMonthRows()"]
-    C --> G["trimSheet()"]
-    C --> H["formatWorkTracker()"]
-    C --> I["setupDropdowns()"]
-    C --> J["setupConditionalFormatting()"]
-    C --> K["setupWeekendFormatting()"]
-
-    D --> L["createListsSheet()"]
-    L --> M["writeLists()"]
-    L --> N["createNamedRanges()"]
-    L --> O["protectListsSheet()"]
-
-    P["addTaskRow()"] --> Q["Append row with today's date"]
-    P --> R["setupDropdowns()"]
-    P --> S["Focus Cell D{row}"]
-```
-
----
-
----
-
-## 8. Real-Time Dashboard & Trigger Engine
-
-The Modern SaaS Command Center Dashboard automatically synchronizes in real time:
-
-1. **Automatic Edit Trigger (`onEdit(e)`)**:
-   - Registered in [`00_Code.gs`](./00_Code.gs) as a top-level global trigger.
-   - When a cell in any **Month Sheet** (e.g., `SEP26`, `OCT26`) is modified (status, priority, task), `updateDashboardOnChange(e)` automatically recalculates metrics and updates the Dashboard without interrupting user focus.
-   - When a quadrant checkbox in the **Todo Sheet** is modified, `handleTodoQuadrantExclusiveSelect(e)` enforces single-selection radio logic and immediately updates the Dashboard's Todo KPI cards.
-   - Active tasks and checkbox selections are managed directly in the dedicated **Todo Sheet**, keeping the Dashboard as a clean, high-level executive analytics view.
-
-2. **Structural Change Trigger (`onChange(e)`)**:
-   - Listens for sheet insertions, deletions, and structural changes to ensure metrics stay fresh.
-
-3. **Programmatic Task Additions**:
-   - `saveTasksBatch()` and `clearTasks()` in [`09_Tasks.gs`](./09_Tasks.gs) invoke `updateDashboardOnChange()` to ensure newly added or reset tasks are reflected instantly on the Dashboard.
-
-4. **Manual Refresh**:
-   - Menu action **Dashboard** > **Refresh Dashboard** (`refreshDashboard()`) rebuilds the dashboard on demand and displays a completion notification.
-
----
-
-## Developer Notes & Observations
-
-1. **Date Format Standardization**:
-   Standardized globally via `CONFIG.DATE_FORMAT: 'MMdd'` across all sheet generation, modal task logging, and fallback row insertions.
-2. **Typography Standards**:
-   `CONFIG.FONTS.TEXT` (`Varela Round`) is applied to titles, headers, labels, and text descriptions. `CONFIG.FONTS.DIGITS` (`Roboto Mono`) is applied to numbers, KPI digits, dates, percentages, and live counters.
-3. **Trigger Safety & Performance**:
-   Automatic updates via `updateDashboardOnChange()` run silently (`suppressAlert = true`) and preserve the user's active sheet (`keepActiveSheet = true`) so ongoing data entry is never interrupted.
+- **Configuration First**: Never hardcode colors, dimensions, or list items; always declare them in `03_Config.gs`.
+- **Batch Processing**: Use bulk `getValues()` and `setValues()`; avoid spreadsheet API calls inside iteration loops.
+- **Safe Gridlines**: Always use `setSheetGridlinesHidden(sheet, hidden)` in `10_Utils.gs`. Never call `sheet.setHideGridlines()` as it is not a native method on `Sheet`.
+- **Preserve User Data**: Setup and maintenance scripts must always treat existing user sheets non-destructively.

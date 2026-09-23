@@ -1,16 +1,28 @@
+// ============================================================
+// CONDITIONALFORMATTING.GS — DYNAMIC SAAS COLOR RULES
+// ============================================================
+
+/**
+ * Configures semantic status and priority conditional formatting on a Month sheet.
+ * Uses restrained SaaS pastel backgrounds with readable dark text defined in CONFIG.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ */
 function setupConditionalFormatting(sheet) {
   const rules = [];
+  const statusColors = CONFIG.COLORS.STATUS;
+  const prioColors = CONFIG.COLORS.PRIORITY;
 
   // -------------------------
-  // PRIORITY
+  // PRIORITY (Column F)
   // -------------------------
 
   rules.push(
     textRule(
       sheet.getRange('F2:F'),
       'Urgent',
-      '#fce8e6',
-      '#ff0000'
+      prioColors.URGENT.bg,
+      prioColors.URGENT.text
     )
   );
 
@@ -18,8 +30,8 @@ function setupConditionalFormatting(sheet) {
     textRule(
       sheet.getRange('F2:F'),
       'High',
-      '#fff2cc',
-      '#b45f06'
+      prioColors.HIGH.bg,
+      prioColors.HIGH.text
     )
   );
 
@@ -27,21 +39,30 @@ function setupConditionalFormatting(sheet) {
     textRule(
       sheet.getRange('F2:F'),
       'Medium',
-      '#fff2cc',
-      '#7f6000'
+      prioColors.MEDIUM.bg,
+      prioColors.MEDIUM.text
+    )
+  );
+
+  rules.push(
+    textRule(
+      sheet.getRange('F2:F'),
+      'Low',
+      prioColors.LOW.bg,
+      prioColors.LOW.text
     )
   );
 
   // -------------------------
-  // STATUS
+  // STATUS (Column G)
   // -------------------------
 
   rules.push(
     textRule(
       sheet.getRange('G2:G'),
       'In Progress',
-      '#cfe2f3',
-      '#1155cc'
+      statusColors.IN_PROGRESS.bg,
+      statusColors.IN_PROGRESS.text
     )
   );
 
@@ -49,8 +70,8 @@ function setupConditionalFormatting(sheet) {
     textRule(
       sheet.getRange('G2:G'),
       'Completed',
-      '#d9ead3',
-      '#008000'
+      statusColors.COMPLETED.bg,
+      statusColors.COMPLETED.text
     )
   );
 
@@ -58,8 +79,17 @@ function setupConditionalFormatting(sheet) {
     textRule(
       sheet.getRange('G2:G'),
       'Blocked',
-      '#f4cccc',
-      '#cc0000'
+      statusColors.BLOCKED.bg,
+      statusColors.BLOCKED.text
+    )
+  );
+
+  rules.push(
+    textRule(
+      sheet.getRange('G2:G'),
+      'Pending',
+      statusColors.PENDING.bg,
+      statusColors.PENDING.text
     )
   );
 
@@ -67,23 +97,19 @@ function setupConditionalFormatting(sheet) {
     textRule(
       sheet.getRange('G2:G'),
       'Cancelled',
-      '#eeeeee',
-      '#666666'
+      statusColors.CANCELLED.bg,
+      statusColors.CANCELLED.text
     )
   );
 
-  sheet.setConditionalFormatRules(
-    rules
-  );
+  sheet.setConditionalFormatRules(rules);
 }
 
 
-function textRule(
-  range,
-  text,
-  background,
-  fontColor
-) {
+/**
+ * Helper to build an exact-match text conditional formatting rule.
+ */
+function textRule(range, text, background, fontColor) {
   return SpreadsheetApp
     .newConditionalFormatRule()
     .whenTextEqualTo(text)
@@ -93,32 +119,34 @@ function textRule(
     .build();
 }
 
-function setupWeekendFormatting(sheet) {
-  const rules = sheet.getConditionalFormatRules();
 
-  // Saturday
+/**
+ * Highlights Saturday and Sunday rows with subtle, restrained weekend shading.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ */
+function setupWeekendFormatting(sheet) {
+  const rules = sheet.getConditionalFormatRules() || [];
+
+  // Saturday: soft muted gray
   rules.push(
     SpreadsheetApp
       .newConditionalFormatRule()
       .whenFormulaSatisfied('=$B2="Sat"')
-      .setBackground('#f3f4f6')
-      .setFontColor('#6b7280')
-      .setRanges([
-        sheet.getRange('A2:G')
-      ])
+      .setBackground('#f8fafc')
+      .setFontColor('#64748b')
+      .setRanges([sheet.getRange('A2:G')])
       .build()
   );
 
-  // Sunday
+  // Sunday: soft muted warm tint
   rules.push(
     SpreadsheetApp
       .newConditionalFormatRule()
       .whenFormulaSatisfied('=$B2="Sun"')
-      .setBackground('#fce8e6')
-      .setFontColor('#cc0000')
-      .setRanges([
-        sheet.getRange('A2:G')
-      ])
+      .setBackground('#fef2f2')
+      .setFontColor('#b91c1c')
+      .setRanges([sheet.getRange('A2:G')])
       .build()
   );
 

@@ -1,108 +1,30 @@
-// ============================================================
-// CALENDARPICKER.GS — VISUAL CALENDAR DATE PICKER ENGINE
-// ============================================================
-
-/**
- * Opens a visual interactive calendar modal dialog to choose a date.
- *
- * @param {string} mode - 'tasks' (for task entry) or 'dsr' (for Daily Status Report)
- * @param {Date} [initialDate] - Pre-selected Date object (defaults to today)
- */
-function openCalendarPicker(mode, initialDate) {
-  const timezone = getTimezone();
-  const date = initialDate || getToday();
-
-  const currentYear = date.getFullYear();
-  const currentMonth = date.getMonth();
-  const currentDay = date.getDate();
-
-  const dateInfo = {
-    mode: mode || 'tasks',
-    year: currentYear,
-    monthIndex: currentMonth,
-    day: currentDay,
-    formattedDate: Utilities.formatDate(date, timezone, 'EEEE, dd MMMM yyyy'),
-    isoDate: Utilities.formatDate(date, timezone, 'yyyy-MM-dd')
-  };
-
-  let htmlOutput;
-  const candidateTemplateNames = [
-    '01_CalendarPickerDialog',
-    'CalendarPickerDialog',
-    '01_CalendarPicker',
-    'CalendarPicker'
-  ];
-
-  for (const tName of candidateTemplateNames) {
-    try {
-      const template = HtmlService.createTemplateFromFile(tName);
-      template.dateInfo = dateInfo;
-      template.mode = mode || 'tasks';
-      htmlOutput = template.evaluate();
-      if (htmlOutput) break;
-    } catch (ignore) {
-      // Continue searching next candidate name
-    }
-  }
-
-  if (!htmlOutput) {
-    const htmlContent = getCalendarPickerHtml(dateInfo, mode);
-    htmlOutput = HtmlService.createHtmlOutput(htmlContent);
-  }
-
-  htmlOutput
-    .setWidth(420)
-    .setHeight(530);
-
-  const dialogTitle = mode === 'dsr'
-    ? 'Choose Date for DSR'
-    : 'Choose Date for Tasks';
-
-  SpreadsheetApp.getUi().showModalDialog(htmlOutput, dialogTitle);
-}
-
-/**
- * Client-callable function: Proceeds to the target workflow (Tasks or DSR)
- * once the user confirms a date from the calendar.
- *
- * @param {Object} payload - { mode: 'tasks' | 'dsr', dateStr: 'YYYY-MM-DD' }
- */
-function proceedFromCalendar(payload) {
-  if (!payload || !payload.dateStr) {
-    return;
-  }
-
-  const parts = payload.dateStr.split('-');
-  const year = parseInt(parts[0], 10);
-  const monthIndex = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-  const targetDate = new Date(year, monthIndex, day);
-
-  if (payload.mode === 'tasks') {
-    openTaskDialog(targetDate);
-  } else if (payload.mode === 'dsr') {
-    showDSRDialog(targetDate, false);
-  }
-}
-
-/**
- * Generates HTML for the visual calendar picker modal.
- *
- * @param {Object} dateInfo
- * @param {string} mode
- * @returns {string} HTML content
- */
-function getCalendarPickerHtml(dateInfo, mode) {
-  const jsonDateInfo = JSON.stringify(dateInfo).replace(/<\/script/gi, '<\\/script');
-  const actionButtonText = mode === 'dsr' ? '📋 Generate DSR' : '📝 Fill Tasks';
-  const headerIcon = mode === 'dsr' ? '📊' : '⚡';
-  const headerTitle = mode === 'dsr' ? 'Select Date for DSR' : 'Select Date for Tasks';
-
-  return `<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <base target="_top">
+  <meta charset="UTF-8">
+  <title><?= mode === 'dsr' ? 'Select Date for DSR' : 'Select Date for Tasks' ?></title>
+  <!-- Google Fonts: Varela Round & Roboto Mono matching WorkSheet design system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Varela+Round&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --font-text: 'Varela Round', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-digits: 'Roboto Mono', monospace;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --weekend-color: #ef4444;
+      --today-color: #4f46e5;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -110,28 +32,32 @@ function getCalendarPickerHtml(dateInfo, mode) {
     }
 
     html, body {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      height: 100%;
       overflow: hidden;
-      background-color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      color: #1e293b;
+      background-color: var(--bg-page);
+      font-family: var(--font-text);
+      color: var(--text-main);
       font-size: 13px;
       line-height: 1.4;
       user-select: none;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
       padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .cal-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 14px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
     }
 
     .cal-header {
@@ -149,16 +75,18 @@ function getCalendarPickerHtml(dateInfo, mode) {
       gap: 7px;
       font-size: 14px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
     }
 
     .cal-badge-mode {
+      font-family: var(--font-digits);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
       padding: 2px 8px;
       border-radius: 9999px;
       background: #ede9fe;
       color: #6366f1;
+      letter-spacing: 0.05em;
     }
 
     /* Month Navigation */
@@ -166,35 +94,42 @@ function getCalendarPickerHtml(dateInfo, mode) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      padding: 0 4px;
     }
 
     .nav-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
       background: #ffffff;
-      color: #475569;
+      color: var(--text-muted);
       cursor: pointer;
       font-size: 12px;
       font-weight: 700;
       transition: all 0.15s ease-in-out;
+      outline: none;
     }
 
     .nav-btn:hover {
       background: #f1f5f9;
-      color: #0f172a;
+      color: var(--text-main);
       border-color: #cbd5e1;
+    }
+
+    .nav-btn:focus-visible {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
     }
 
     .month-year-label {
       font-size: 14px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
     }
 
     /* Days of Week */
@@ -207,16 +142,17 @@ function getCalendarPickerHtml(dateInfo, mode) {
     }
 
     .weekday-label {
+      font-family: var(--font-digits);
       font-size: 11px;
-      font-weight: 700;
-      color: #64748b;
+      font-weight: 600;
+      color: var(--text-muted);
       padding: 4px 0;
       text-transform: uppercase;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
     }
 
     .weekday-label.weekend {
-      color: #ef4444;
+      color: var(--weekend-color);
     }
 
     /* Days Grid */
@@ -233,18 +169,23 @@ function getCalendarPickerHtml(dateInfo, mode) {
       align-items: center;
       justify-content: center;
       border-radius: 6px;
+      font-family: var(--font-digits);
       font-size: 12px;
       font-weight: 500;
-      color: #1e293b;
+      color: var(--text-main);
       cursor: pointer;
       transition: all 0.12s ease-in-out;
       border: 1px solid transparent;
-      position: relative;
+      outline: none;
     }
 
     .day-cell:hover {
       background-color: #f1f5f9;
-      color: #0f172a;
+      color: var(--text-main);
+    }
+
+    .day-cell:focus-visible {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
     }
 
     .day-cell.other-month {
@@ -253,19 +194,21 @@ function getCalendarPickerHtml(dateInfo, mode) {
 
     .day-cell.weekend:not(.other-month):not(.selected) {
       color: #b91c1c;
+      font-weight: 600;
     }
 
     .day-cell.today {
-      border-color: #6366f1;
+      border-color: var(--primary);
       font-weight: 700;
-      color: #4f46e5;
+      color: var(--primary);
+      background-color: var(--primary-light);
     }
 
     .day-cell.selected {
-      background-color: #4f46e5 !important;
+      background-color: var(--primary) !important;
       color: #ffffff !important;
       font-weight: 700;
-      box-shadow: 0 1px 3px rgba(79, 70, 229, 0.4);
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.35);
     }
 
     /* Selected Date Display */
@@ -274,19 +217,21 @@ function getCalendarPickerHtml(dateInfo, mode) {
       align-items: center;
       justify-content: space-between;
       background: #f1f5f9;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 7px 12px;
+      padding: 8px 12px;
       margin-bottom: 12px;
       font-size: 12px;
     }
 
     .selected-bar-title {
-      color: #64748b;
+      color: var(--text-muted);
       font-weight: 600;
     }
 
     .selected-bar-date {
-      color: #0f172a;
+      color: var(--text-main);
+      font-family: var(--font-digits);
       font-weight: 700;
     }
 
@@ -303,7 +248,8 @@ function getCalendarPickerHtml(dateInfo, mode) {
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 7px 12px;
+      padding: 8px 12px;
+      font-family: var(--font-text);
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
@@ -313,15 +259,19 @@ function getCalendarPickerHtml(dateInfo, mode) {
       border: 1px solid transparent;
     }
 
+    .btn:focus-visible {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+    }
+
     .btn-primary {
-      background-color: #4f46e5;
+      background-color: var(--primary);
       color: #ffffff;
       flex: 1.4;
       box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
     }
 
     .btn-primary:hover {
-      background-color: #4338ca;
+      background-color: var(--primary-hover);
     }
 
     .btn-primary:disabled {
@@ -331,25 +281,25 @@ function getCalendarPickerHtml(dateInfo, mode) {
 
     .btn-today {
       background: #ffffff;
-      color: #4f46e5;
+      color: var(--primary);
       border-color: #c7d2fe;
       flex: 0.8;
     }
 
     .btn-today:hover {
-      background: #eef2ff;
+      background: var(--primary-light);
     }
 
     .btn-cancel {
       background: #ffffff;
-      color: #64748b;
-      border-color: #e2e8f0;
+      color: var(--text-muted);
+      border-color: var(--border-color);
       flex: 0.8;
     }
 
     .btn-cancel:hover {
       background: #f1f5f9;
-      color: #0f172a;
+      color: var(--text-main);
     }
 
     .hint-text {
@@ -361,25 +311,25 @@ function getCalendarPickerHtml(dateInfo, mode) {
   </style>
 </head>
 <body>
-  <div class="cal-card">
+  <div class="cal-card" role="dialog" aria-modal="true" aria-labelledby="calTitle">
     <!-- Header -->
     <div class="cal-header">
-      <div class="cal-header-title">
-        <span>${headerIcon}</span>
-        <span>${headerTitle}</span>
+      <div class="cal-header-title" id="calTitle">
+        <span><?= mode === 'dsr' ? '📊' : '⚡' ?></span>
+        <span><?= mode === 'dsr' ? 'Select Date for DSR' : 'Select Date for Tasks' ?></span>
       </div>
-      <span class="cal-badge-mode">${mode.toUpperCase()}</span>
+      <span class="cal-badge-mode"><?= (mode || 'tasks').toUpperCase() ?></span>
     </div>
 
     <!-- Month Navigation -->
     <div class="month-nav-bar">
-      <button class="nav-btn" onclick="prevMonth()" title="Previous Month">◀</button>
-      <div class="month-year-label" id="monthYearLabel"></div>
-      <button class="nav-btn" onclick="nextMonth()" title="Next Month">▶</button>
+      <button class="nav-btn" onclick="prevMonth()" title="Previous Month (PageUp or [)" aria-label="Previous Month">◀</button>
+      <div class="month-year-label" id="monthYearLabel" aria-live="polite"></div>
+      <button class="nav-btn" onclick="nextMonth()" title="Next Month (PageDown or ])" aria-label="Next Month">▶</button>
     </div>
 
     <!-- Days of Week (Mon - Sun) -->
-    <div class="weekdays-row">
+    <div class="weekdays-row" aria-hidden="true">
       <span class="weekday-label">Mo</span>
       <span class="weekday-label">Tu</span>
       <span class="weekday-label">We</span>
@@ -390,48 +340,46 @@ function getCalendarPickerHtml(dateInfo, mode) {
     </div>
 
     <!-- Calendar Days Grid -->
-    <div class="days-grid" id="daysGrid"></div>
+    <div class="days-grid" id="daysGrid" role="grid" tabindex="0" aria-label="Calendar days grid"></div>
 
     <!-- Selected Date Preview -->
     <div class="selected-bar">
-      <span class="selected-bar-title">Selected:</span>
+      <span class="selected-bar-title">Selected Date:</span>
       <span class="selected-bar-date" id="selectedDateText"></span>
     </div>
 
     <!-- Footer Actions -->
     <div class="cal-footer">
-      <button class="btn btn-today" onclick="selectToday()">Today</button>
+      <button class="btn btn-today" onclick="selectToday()" title="Jump to Today">Today</button>
       <button class="btn btn-cancel" onclick="google.script.host.close()">Cancel</button>
       <button id="proceedBtn" class="btn btn-primary" onclick="confirmSelection()">
-        ${actionButtonText}
+        <?= mode === 'dsr' ? '📋 Generate DSR' : '📝 Fill Tasks' ?>
       </button>
     </div>
 
-    <div class="hint-text">💡 Tip: Double-click any date to select instantly</div>
+    <div class="hint-text">💡 Tip: Double-click any date or press <strong>Enter</strong> to confirm</div>
   </div>
 
   <script>
-    const config = ${jsonDateInfo};
+    // Injected template data (with fallback support)
+    const config = <?!= JSON.stringify(typeof dateInfo !== 'undefined' ? dateInfo : {}) ?>;
 
     const MONTH_NAMES = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Today's exact date values
     const todayObj = new Date();
     const todayYear = todayObj.getFullYear();
     const todayMonth = todayObj.getMonth();
     const todayDay = todayObj.getDate();
 
-    // Currently viewed month/year in calendar
-    let viewYear = config.year;
-    let viewMonth = config.monthIndex;
+    let viewYear = config.year || todayYear;
+    let viewMonth = typeof config.monthIndex === 'number' ? config.monthIndex : todayMonth;
 
-    // Currently selected target date
-    let selectedYear = config.year;
-    let selectedMonth = config.monthIndex;
-    let selectedDay = config.day;
+    let selectedYear = config.year || todayYear;
+    let selectedMonth = typeof config.monthIndex === 'number' ? config.monthIndex : todayMonth;
+    let selectedDay = config.day || todayDay;
 
     window.onload = function() {
       renderCalendar();
@@ -473,11 +421,8 @@ function getCalendarPickerHtml(dateInfo, mode) {
       const grid = document.getElementById('daysGrid');
       grid.innerHTML = '';
 
-      // First day of current view month (0=Sun, 1=Mon, ..., 6=Sat)
       const firstDayDate = new Date(viewYear, viewMonth, 1);
-      // Convert Sunday (0) to 6, Monday (1) to 0, etc. (Monday start)
-      const startOffset = (firstDayDate.getDay() + 6) % 7;
-
+      const startOffset = (firstDayDate.getDay() + 6) % 7; // Monday start
       const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
       const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
 
@@ -502,21 +447,21 @@ function getCalendarPickerHtml(dateInfo, mode) {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
         cell.innerText = d;
+        cell.setAttribute('role', 'gridcell');
 
-        // Day of week index for weekend highlighting (Monday=0 ... Sunday=6)
         const dayOfWeek = (startOffset + (d - 1)) % 7;
         if (dayOfWeek === 5 || dayOfWeek === 6) {
           cell.classList.add('weekend');
         }
 
-        // Today highlight
         if (viewYear === todayYear && viewMonth === todayMonth && d === todayDay) {
           cell.classList.add('today');
+          cell.title = 'Today';
         }
 
-        // Selected highlight
         if (viewYear === selectedYear && viewMonth === selectedMonth && d === selectedDay) {
           cell.classList.add('selected');
+          cell.setAttribute('aria-selected', 'true');
         }
 
         cell.onclick = (function(y, m, dayNum) {
@@ -535,7 +480,7 @@ function getCalendarPickerHtml(dateInfo, mode) {
         grid.appendChild(cell);
       }
 
-      // 3. Next month leading days to complete the rows
+      // 3. Next month leading days
       const totalCells = startOffset + daysInMonth;
       const nextMonthSlots = (7 - (totalCells % 7)) % 7;
       for (let d = 1; d <= nextMonthSlots; d++) {
@@ -571,6 +516,7 @@ function getCalendarPickerHtml(dateInfo, mode) {
     function confirmSelection() {
       const proceedBtn = document.getElementById('proceedBtn');
       proceedBtn.disabled = true;
+      const originalText = proceedBtn.innerText;
       proceedBtn.innerText = '⏳ Opening...';
 
       const mm = (selectedMonth + 1 < 10 ? '0' : '') + (selectedMonth + 1);
@@ -580,22 +526,46 @@ function getCalendarPickerHtml(dateInfo, mode) {
       google.script.run
         .withFailureHandler(function(err) {
           proceedBtn.disabled = false;
-          proceedBtn.innerText = '${actionButtonText}';
+          proceedBtn.innerText = originalText;
           alert('Error: ' + (err.message || err));
         })
         .proceedFromCalendar({
-          mode: config.mode,
+          mode: config.mode || 'tasks',
           dateStr: dateStr
         });
     }
 
-    // Keyboard support: Enter confirms selection
+    // Keyboard Shortcuts & Navigation
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
+      if (e.key === 'Escape') {
+        google.script.host.close();
+      } else if (e.key === 'Enter') {
         confirmSelection();
+      } else if (e.key === 'ArrowLeft') {
+        changeDay(-1);
+      } else if (e.key === 'ArrowRight') {
+        changeDay(1);
+      } else if (e.key === 'ArrowUp') {
+        changeDay(-7);
+      } else if (e.key === 'ArrowDown') {
+        changeDay(7);
+      } else if (e.key === 'PageUp' || e.key === '[') {
+        prevMonth();
+      } else if (e.key === 'PageDown' || e.key === ']') {
+        nextMonth();
       }
     });
+
+    function changeDay(delta) {
+      const cur = new Date(selectedYear, selectedMonth, selectedDay + delta);
+      selectedYear = cur.getFullYear();
+      selectedMonth = cur.getMonth();
+      selectedDay = cur.getDate();
+      viewYear = selectedYear;
+      viewMonth = selectedMonth;
+      renderCalendar();
+      updateSelectedDateDisplay();
+    }
   </script>
 </body>
-</html>`;
-}
+</html>

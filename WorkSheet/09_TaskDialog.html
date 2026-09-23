@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Add Daily Tasks</title>
+  <!-- Google Fonts: Varela Round & Roboto Mono matching WorkSheet design system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Varela+Round&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-text: 'Varela Round', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-digits: 'Roboto Mono', monospace;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #ede9fe;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-light: #e2e8f0;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --pending-bg: #fef3c7;
+      --pending-text: #b45309;
+      --pending-border: #fde68a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg-page);
+      font-family: var(--font-text);
+      color: var(--text-main);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      padding: 12px 14px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-icon {
+      font-size: 18px;
+    }
+
+    .title-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .badge-tab {
+      background: var(--primary-light);
+      color: #6366f1;
+      font-family: var(--font-digits);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Date Row */
+    .date-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border: 1px solid var(--border-light);
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .date-label {
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .date-picker-input {
+      padding: 4px 8px;
+      font-family: var(--font-digits);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .date-picker-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .date-display-text {
+      color: #334155;
+      font-family: var(--font-digits);
+      font-weight: 600;
+      margin-left: auto;
+      font-size: 12px;
+    }
+
+    /* Form Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    select, textarea {
+      font-family: var(--font-text);
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 7px 10px;
+      background-color: #ffffff;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    select:focus, textarea:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .status-auto-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
+      padding: 6px 10px;
+      height: 34px;
+    }
+
+    .badge-pending {
+      background: var(--pending-bg);
+      color: var(--pending-text);
+      font-family: var(--font-digits);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid var(--pending-border);
+    }
+
+    .task-area-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .counter-badge {
+      font-family: var(--font-digits);
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: var(--primary-light);
+      padding: 1px 7px;
+      border-radius: 9999px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      max-height: 160px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .tip-text {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Buttons */
+    .btn-container {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      font-family: var(--font-text);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      outline: none;
+      user-select: none;
+      border: 1px solid transparent;
+    }
+
+    .btn:focus-visible {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      flex: 1.2;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      color: var(--primary);
+      border-color: #c7d2fe;
+      flex: 1.2;
+    }
+
+    .btn-secondary:hover {
+      background-color: #eef2ff;
+      border-color: #a5b4fc;
+    }
+
+    .btn-cancel {
+      background-color: #ffffff;
+      color: var(--text-muted);
+      border-color: var(--border-light);
+      flex: 0.6;
+    }
+
+    .btn-cancel:hover {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-toast {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+      text-align: center;
+    }
+
+    .status-toast.success {
+      display: block;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-toast.error {
+      display: block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="taskDialogTitle">
+    <div class="header-row">
+      <div class="title-area">
+        <span class="title-icon">⚡</span>
+        <span class="title-text" id="taskDialogTitle">Add Daily Tasks</span>
+      </div>
+      <span class="badge-tab" id="monthBadge"></span>
+    </div>
+
+    <!-- Date Row with Calendar Picker -->
+    <div class="date-row">
+      <span class="date-label">📅 Date:</span>
+      <input type="date" id="dateInput" class="date-picker-input" onchange="handleDateChange()" aria-label="Task Date">
+      <span id="dateDisplay" class="date-display-text"></span>
+    </div>
+
+    <!-- Form Controls for Project, Category, Priority -->
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="projectSelect">Project</label>
+        <select id="projectSelect" aria-label="Select Project"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect" aria-label="Select Category"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="prioritySelect">Priority</label>
+        <select id="prioritySelect" aria-label="Select Priority"></select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <div class="status-auto-row" aria-label="Status automatically defaults to Pending">
+          <span style="font-size: 11px; color: #64748b;">Default</span>
+          <span class="badge-pending">Pending (Auto)</span>
+        </div>
+      </div>
+
+      <!-- Tasks Textarea -->
+      <div class="form-group full-width">
+        <div class="task-area-label-row">
+          <label for="tasksInput">Tasks (one per line)</label>
+          <span id="taskCountBadge" class="counter-badge" aria-live="polite">0 tasks</span>
+        </div>
+        <textarea
+          id="tasksInput"
+          placeholder="Paste or type tasks for this project...&#10;• Example task 1&#10;• Example task 2"
+          oninput="updateTaskCount()"
+          aria-label="Tasks list, one task per line"
+        ></textarea>
+        <div class="tip-text">
+          <span>⌨️ Shortcut: Press <strong>Ctrl + Enter</strong> to add tasks</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="btn-container">
+      <button id="saveBtn" class="btn btn-primary" onclick="submitBatch(false)">
+        📥 Add Tasks
+      </button>
+      <button id="saveAndNextBtn" class="btn btn-secondary" onclick="submitBatch(true)">
+        + Add & Next Project
+      </button>
+      <button id="closeBtn" class="btn btn-cancel" onclick="google.script.host.close()">
+        Close
+      </button>
+    </div>
+
+    <div id="statusToast" class="status-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const dateInfo = <?!= JSON.stringify(typeof dateInfo !== 'undefined' ? dateInfo : {}) ?>;
+    const configLists = <?!= JSON.stringify(typeof configLists !== 'undefined' ? configLists : {}) ?>;
+
+    window.onload = function() {
+      if (dateInfo.isoDate) {
+        document.getElementById('dateInput').value = dateInfo.isoDate;
+      }
+      if (dateInfo.formattedDate) {
+        document.getElementById('dateDisplay').innerText = dateInfo.formattedDate;
+      }
+      if (dateInfo.monthSheetName) {
+        document.getElementById('monthBadge').innerText = dateInfo.monthSheetName;
+      }
+
+      initDropdowns();
+
+      const textarea = document.getElementById('tasksInput');
+      if (textarea) {
+        textarea.focus();
+      }
+    };
+
+    function handleDateChange() {
+      const inputVal = document.getElementById('dateInput').value;
+      if (!inputVal) return;
+      const parts = inputVal.split('-');
+      dateInfo.year = parseInt(parts[0], 10);
+      dateInfo.monthIndex = parseInt(parts[1], 10) - 1;
+      dateInfo.day = parseInt(parts[2], 10);
+
+      const d = new Date(dateInfo.year, dateInfo.monthIndex, dateInfo.day);
+      const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+      document.getElementById('dateDisplay').innerText = d.toLocaleDateString('en-GB', options);
+
+      const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const yy = String(dateInfo.year).slice(-2);
+      dateInfo.monthSheetName = monthNames[dateInfo.monthIndex] + yy;
+      document.getElementById('monthBadge').innerText = dateInfo.monthSheetName;
+    }
+
+    function initDropdowns() {
+      // Projects
+      const projSelect = document.getElementById('projectSelect');
+      projSelect.innerHTML = '';
+      (configLists.projects || []).forEach(function(p) {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.text = p;
+        projSelect.appendChild(opt);
+      });
+
+      // Categories
+      const catSelect = document.getElementById('categorySelect');
+      catSelect.innerHTML = '';
+      (configLists.categories || []).forEach(function(c) {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.text = c;
+        if (c.toLowerCase() === 'development') {
+          opt.selected = true;
+        }
+        catSelect.appendChild(opt);
+      });
+
+      // Priorities
+      const prioSelect = document.getElementById('prioritySelect');
+      prioSelect.innerHTML = '';
+      (configLists.priorities || []).forEach(function(pr) {
+        const opt = document.createElement('option');
+        opt.value = pr;
+        opt.text = pr;
+        if (pr.toLowerCase() === 'medium') {
+          opt.selected = true;
+        }
+        prioSelect.appendChild(opt);
+      });
+    }
+
+    function getTaskLines() {
+      const text = document.getElementById('tasksInput').value || '';
+      return text
+        .split('\n')
+        .map(function(line) { return line.trim(); })
+        .filter(function(line) { return line.length > 0; });
+    }
+
+    function updateTaskCount() {
+      const count = getTaskLines().length;
+      const badge = document.getElementById('taskCountBadge');
+      badge.innerText = count + (count === 1 ? ' task' : ' tasks');
+    }
+
+    // Keyboard Shortcuts: Ctrl+Enter (or Cmd+Enter) to submit, Escape to close
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        submitBatch(false);
+      } else if (e.key === 'Escape') {
+        google.script.host.close();
+      }
+    });
+
+    function submitBatch(keepOpen) {
+      const tasks = getTaskLines();
+      const toast = document.getElementById('statusToast');
+
+      if (tasks.length === 0) {
+        toast.className = 'status-toast error';
+        toast.innerText = 'Please write or paste at least one task.';
+        document.getElementById('tasksInput').focus();
+        return;
+      }
+
+      const project = document.getElementById('projectSelect').value;
+      const category = document.getElementById('categorySelect').value;
+      const priority = document.getElementById('prioritySelect').value;
+
+      const payload = {
+        day: dateInfo.day,
+        monthIndex: dateInfo.monthIndex,
+        year: dateInfo.year,
+        project: project,
+        category: category,
+        priority: priority,
+        tasks: tasks
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      const saveAndNextBtn = document.getElementById('saveAndNextBtn');
+
+      saveBtn.disabled = true;
+      saveAndNextBtn.disabled = true;
+      saveBtn.innerText = '⏳ Saving...';
+      toast.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          saveBtn.disabled = false;
+          saveAndNextBtn.disabled = false;
+          saveBtn.innerText = '📥 Add Tasks';
+
+          if (!res || !res.success) {
+            toast.className = 'status-toast error';
+            toast.innerText = (res && res.message) || 'Failed to save tasks.';
+            return;
+          }
+
+          if (keepOpen) {
+            document.getElementById('tasksInput').value = '';
+            updateTaskCount();
+
+            toast.className = 'status-toast success';
+            toast.innerText = '✓ Added ' + res.count + ' task(s) for ' + res.project + '! Ready for next project.';
+            document.getElementById('tasksInput').focus();
+          } else {
+            toast.className = 'status-toast success';
+            toast.innerText = '✓ Saved ' + res.count + ' task(s) to ' + res.monthSheetName + '!';
+
+            setTimeout(function() {
+              google.script.host.close();
+            }, 900);
+          }
+        })
+        .withFailureHandler(function(err) {
+          saveBtn.disabled = false;
+          saveAndNextBtn.disabled = false;
+          saveBtn.innerText = '📥 Add Tasks';
+          toast.className = 'status-toast error';
+          toast.innerText = 'Error: ' + (err.message || err);
+        })
+        .saveTasksBatch(payload);
+    }
+  </script>
+</body>
+</html>

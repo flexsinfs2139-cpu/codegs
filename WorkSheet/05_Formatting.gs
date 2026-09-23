@@ -40,7 +40,8 @@ function formatHeader(sheet) {
       1,
       CONFIG.HEADERS.length
     )
-    .setBackground(CONFIG.COLORS.HEADER)
+    .setBackground(CONFIG.COLORS.HEADER_BG || CONFIG.COLORS.HEADER || '#f8fafc')
+    .setFontColor(CONFIG.COLORS.HEADER_TEXT || '#0f172a')
     .setFontFamily(CONFIG.FONTS.TEXT)
     .setFontWeight('bold')
     .setHorizontalAlignment('center');
@@ -73,7 +74,7 @@ function formatColumns(sheet) {
 
 
 function formatDimensions(sheet) {
-  const widths = [
+  const widths = (CONFIG.DIMENSIONS && CONFIG.DIMENSIONS.MONTH_COL_WIDTHS) || [
     75,   // Date
     60,   // Day
     130,  // Project
@@ -90,15 +91,17 @@ function formatDimensions(sheet) {
     );
   });
 
-  sheet.setRowHeight(1, 28);
+  const headerHeight = (CONFIG.DIMENSIONS && CONFIG.DIMENSIONS.HEADER_ROW_HEIGHT) || 28;
+  sheet.setRowHeight(1, headerHeight);
 
   const lastRow = sheet.getLastRow();
 
   if (lastRow > 1) {
+    const dataHeight = (CONFIG.DIMENSIONS && CONFIG.DIMENSIONS.DATA_ROW_HEIGHT) || 42;
     sheet.setRowHeights(
       2,
       lastRow - 1,
-      42
+      dataHeight
     );
   }
 }
@@ -112,7 +115,7 @@ function formatBorders(range) {
     true,
     true,
     true,
-    CONFIG.COLORS.BORDER,
+    CONFIG.COLORS.BORDER || '#cbd5e1',
     SpreadsheetApp.BorderStyle.SOLID
   );
 }

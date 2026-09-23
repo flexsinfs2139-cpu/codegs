@@ -79,10 +79,27 @@ function openTaskDialog(targetDate) {
     priorities: (CONFIG.LISTS && CONFIG.LISTS.Priorities) || ['Low', 'Medium', 'High', 'Urgent']
   };
 
-  const htmlContent = getTaskDialogHtml(dateInfo, configLists);
-  const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
+  let htmlOutput;
+  try {
+    const template = HtmlService.createTemplateFromFile('09_TaskDialog');
+    template.dateInfo = dateInfo;
+    template.configLists = configLists;
+    htmlOutput = template.evaluate();
+  } catch (e1) {
+    try {
+      const template = HtmlService.createTemplateFromFile('TaskDialog');
+      template.dateInfo = dateInfo;
+      template.configLists = configLists;
+      htmlOutput = template.evaluate();
+    } catch (e2) {
+      const htmlContent = getTaskDialogHtml(dateInfo, configLists);
+      htmlOutput = HtmlService.createHtmlOutput(htmlContent);
+    }
+  }
+
+  htmlOutput
     .setWidth(550)
-    .setHeight(585);
+    .setHeight(590);
 
   SpreadsheetApp.getUi().showModalDialog(
     htmlOutput,
