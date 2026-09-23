@@ -31,8 +31,6 @@ function onOpen() {
   // Root WorkSheet Menu
   ui.createMenu('WorkSheet')
     .addItem('⚡ Setup / Repair Work Tracker', 'setupWorkTracker')
-    .addItem('📊 Open Dashboard', 'openDashboard')
-    .addItem('🎯 Open Todo', 'openTodoSheet')
     .addSeparator()
     .addSubMenu(tasksMenu)
     .addSubMenu(dsrMenu)

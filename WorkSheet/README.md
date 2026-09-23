@@ -72,7 +72,7 @@ WorkSheet/
 | **`04_DSRDialog.html`** | DSR Modal UI | Interactive DSR modal dialog with live calendar date switcher and 1-click export actions. |
 | **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies SaaS typography, subtle `#cbd5e1` borders, dimensions, and safe gridline hiding. |
 | **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
-| **`07_Menu.gs`** | `onOpen`, `openDashboard`, `openTodoSheet` | Injects the unified `WorkSheet` toolbar menu with `Tasks`, `DSR`, and `Advanced` submenus. |
+| **`07_Menu.gs`** | `onOpen` | Injects the unified `WorkSheet` toolbar menu with `Tasks`, `DSR`, and `Advanced` submenus. |
 | **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Idempotently creates or refreshes monthly task sheets without deleting existing task data. |
 | **`09_Tasks.gs`** | `fillTaskForToday`, `fillTaskForSelectedDate`, `saveTasksBatch`, `clearTasks` | Controller for fast multi-task batch logging; loads `09_TaskDialog.html` with resilient fallback. |
 | **`09_TaskDialog.html`** | Task Entry Modal UI | Clean batch task modal with project/category/priority selection, `Ctrl + Enter` shortcut, and `+ Add & Next Project` workflow. |
@@ -161,8 +161,6 @@ Consolidated single top-level menu hierarchy:
 ```text
 WorkSheet
 ├── ⚡ Setup / Repair Work Tracker  → setupWorkTracker()
-├── 📊 Open Dashboard              → openDashboard()
-├── 🎯 Open Todo                   → openTodoSheet()
 ├── ─────────────────────────────
 ├── Tasks ▶
 │   ├── Fill Task for Today        → fillTaskForToday()
