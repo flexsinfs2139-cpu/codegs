@@ -94,6 +94,16 @@ This file serves as persistent memory and context for Antigravity (the equivalen
     - Added subtle `#e2e8f0` row borders to Monthly Breakdown, Project Performance, and Todo Backlog so data is structured and readable on a seamless canvas.
     - Added `View -> Hide Gridlines (All Sheets)` and `View -> Show Gridlines (All Sheets)` toolbar menu actions in `07_Menu.gs` and `10_Utils.gs`.
     - Documented Google Sheets browser UI architecture for the formula bar: formula bar visibility is a user-level browser setting (toggled via `View -> Show -> Formula bar` or `Ctrl + Shift + F` for Full Screen mode) which Google Apps Script cannot access via API.
+15. **Dashboard Streamlining (Todo Backlog Table Removal)**:
+    - Removed the redundant Todo Backlog table from `12_Dashboard.gs` to eliminate duplicate task rows, conflicting checkbox states, and artificial column bloating.
+    - Preserved the high-level Eisenhower Matrix KPI summary cards (`Total Todos`, `Q1: Do`, `Q2: Schedule`, `Q3: Delegate`, `Q4: Don't Do`, `Focus Ratio`).
+    - Standardized column widths for the Monthly Breakdown (Cols A–G) and Project Performance (Cols I–M) tables to balanced proportions (Cols A: 130px, B–F: 80px, G: 95px, H: 45px, I: 150px, J–L: 80px, M: 95px).
+    - Converted direct edits on the Dashboard to be cleanly ignored since active tasks and single-selection checkbox toggles are managed on the dedicated `Todo` sheet.
+16. **Removed View Toolbar Menu**:
+    - Removed the `View` menu (`Hide Gridlines (All Sheets)`, `Show Gridlines (All Sheets)`) from `07_Menu.gs` to keep the custom Google Sheets menu toolbar concise and clean. Automatic gridline hiding remains handled directly by sheet generators.
+17. **Safe Gridline Toggling (`setSheetGridlinesHidden`)**:
+    - Replaced unsupported `sheet.setHideGridlines()` calls with the safe helper `setSheetGridlinesHidden(sheet, hidden)` in `10_Utils.gs`.
+    - Leverages the Google Sheets Advanced API (`Sheets.Spreadsheets.batchUpdate`) if enabled, and fails gracefully without throwing `TypeError: sheet.setHideGridlines is not a function` in standard Apps Script runtimes.
 
 ---
 

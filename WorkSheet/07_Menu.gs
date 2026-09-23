@@ -80,20 +80,4 @@ function onOpen() {
       'refreshDashboard'
     )
     .addToUi();
-
-
-  // ==========================================================
-  // VIEW
-  // ==========================================================
-
-  ui.createMenu('View')
-    .addItem(
-      'Hide Gridlines (All Sheets)',
-      'hideGridlinesAllSheets'
-    )
-    .addItem(
-      'Show Gridlines (All Sheets)',
-      'showGridlinesAllSheets'
-    )
-    .addToUi();
 }

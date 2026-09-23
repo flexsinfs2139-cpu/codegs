@@ -37,7 +37,7 @@ function populateDummyData(suppressAlert = false) {
         'Dummy Data Seeded Successfully!\n\n' +
         '• Month Sheet: 21 realistic engineering tasks across projects and statuses.\n' +
         '• Todo Sheet: 12 Eisenhower Matrix tasks with live counter stats.\n' +
-        '• Command Center Dashboard: Refreshed with live KPIs and Todo Backlog.'
+        '• Command Center Dashboard: Refreshed with live KPIs and Eisenhower Matrix metrics.'
       );
     } catch (err) {
       ss.toast('Dummy data populated and Dashboard refreshed.', '⚡ Sample Data', 4);

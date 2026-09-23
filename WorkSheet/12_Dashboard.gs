@@ -6,7 +6,7 @@
  * Menu Action / Programmatic: (Re)builds the modern SaaS Command Center Dashboard from scratch.
  * Aggregates live task metrics across all monthly sheets into 6 high-level KPI cards,
  * a Monthly Breakdown table, a Project Performance table, and an Eisenhower Matrix
- * Todo Command Center with dedicated Todo KPI cards and an active backlog table.
+ * Todo Command Center with dedicated Todo KPI cards.
  * Uses Varela Round for all text/headers and Roboto Mono for all digits/metrics.
  *
  * @param {boolean} [suppressAlert=false] Whether to suppress the completion dialog
@@ -18,7 +18,7 @@ function refreshDashboard(suppressAlert = false, keepActiveSheet = false) {
   const sheet = ensureDashboardSheet(ss);
 
   // Guarantee sufficient row & column headroom before drawing
-  const minRows = 80;
+  const minRows = 40;
   const currentMaxRows = sheet.getMaxRows();
   const currentMaxCols = sheet.getMaxColumns();
 
@@ -91,9 +91,8 @@ function updateDashboardOnChange(e) {
     const sheet = e.range.getSheet();
     const sheetName = sheet.getName();
 
-    // 1. Edits occurring directly on the Dashboard sheet
+    // 1. Edits occurring directly on the Dashboard sheet are ignored (read-only view)
     if (sheetName === CONFIG.DASHBOARD_SHEET_NAME) {
-      handleDashboardTodoEdit(e, ss);
       return;
     }
 
@@ -113,58 +112,14 @@ function updateDashboardOnChange(e) {
 
 
 /**
- * Synchronizes user edits made directly on the Dashboard's Todo Backlog table
- * back to the underlying Todo sheet, enforcing mutual exclusivity.
+ * Legacy stub: user edits directly on Dashboard are now ignored as Dashboard is a read-only analytics view.
+ * All task interactions and checkbox selections happen directly on the dedicated Todo sheet.
  *
- * @param {GoogleAppsScript.Events.SheetsOnEdit} e
- * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss
+ * @param {GoogleAppsScript.Events.SheetsOnEdit} [e]
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} [ss]
  */
 function handleDashboardTodoEdit(e, ss) {
-  if (!e || !e.range) return;
-  const col = e.range.getColumn();
-  const row = e.range.getRow();
-
-  // Quadrant columns are 3 to 6 (C: Q1, D: Q2, E: Q3, F: Q4)
-  if (col < 3 || col > 6) return;
-
-  const dashboardSheet = e.range.getSheet();
-  const taskName = String(dashboardSheet.getRange(row, 1).getValue() || '').trim();
-  if (!taskName) return;
-
-  const todoSheet = ss.getSheetByName(CONFIG.TODO_SHEET_NAME);
-  if (!todoSheet || todoSheet.getLastRow() < CONFIG.TODO_FIRST_DATA_ROW) return;
-
-  const numTodoRows = todoSheet.getLastRow() - CONFIG.TODO_HEADER_ROW;
-  const todoValues = todoSheet
-    .getRange(CONFIG.TODO_FIRST_DATA_ROW, 1, numTodoRows, CONFIG.TODO_HEADERS.length)
-    .getValues();
-
-  // Locate matching task in Todo sheet
-  let matchFound = false;
-  for (let i = 0; i < todoValues.length; i++) {
-    if (String(todoValues[i][0] || '').trim() === taskName) {
-      const targetRow = CONFIG.TODO_FIRST_DATA_ROW + i;
-      const isChecked = Boolean(e.range.getValue());
-
-      if (isChecked) {
-        // Enforce radio-button single selection on target row
-        todoSheet.getRange(targetRow, 3, 1, 4).setValues([[
-          col === 3,
-          col === 4,
-          col === 5,
-          col === 6
-        ]]);
-      } else {
-        todoSheet.getRange(targetRow, col).setValue(false);
-      }
-      matchFound = true;
-      break;
-    }
-  }
-
-  if (matchFound) {
-    refreshDashboard(true, true);
-  }
+  // Read-only dashboard view: tasks are managed on the Todo sheet
 }
 
 
@@ -632,8 +587,7 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
 
 
 /**
- * Renders the Eisenhower Matrix Todo statistics cards and task backlog
- * in the Dashboard sheet.
+ * Renders the Eisenhower Matrix Todo statistics cards in the Dashboard sheet.
  *
  * Uses Varela Round for titles/headers/names and Roboto Mono for digits/metrics.
  *
@@ -793,106 +747,7 @@ function renderTodoSection(sheet, ss, startRow) {
   sheet.setRowHeight(cardStartRow + 1, 46);
   sheet.setRowHeight(cardStartRow + 2, 24);
 
-  // 4. Spacer between Todo Cards and Todo Table
-  const tableSpacerRow = cardStartRow + 3;
-  sheet.setRowHeight(tableSpacerRow, 16);
-
-  // 5. Todo Table Banner (Cols A to F: Varela Round)
-  const bannerRow = tableSpacerRow + 1;
-  const headers = CONFIG.TODO_HEADERS;
-  sheet.getRange(bannerRow, 1, 1, headers.length)
-    .merge()
-    .setValue(`  TODO BACKLOG — ACTIVE TASKS (${totalTodos})`)
-    .setFontFamily(textFont)
-    .setFontSize(9)
-    .setFontWeight('bold')
-    .setFontColor(colors.BANNER_TEXT)
-    .setBackground(colors.BANNER_BG)
-    .setVerticalAlignment('middle');
-  sheet.setRowHeight(bannerRow, 26);
-
-  // 6. Todo Table Headers (Cols A to F: Varela Round)
-  const headerRow = bannerRow + 1;
-  const headerRange = sheet.getRange(headerRow, 1, 1, headers.length);
-  headerRange
-    .setValues([headers])
-    .setFontFamily(textFont)
-    .setFontSize(9)
-    .setFontWeight('bold')
-    .setFontColor(colors.TABLE_HEADER_TEXT)
-    .setBackground(colors.TABLE_HEADER_BG)
-    .setVerticalAlignment('middle')
-    .setWrap(false)
-    .setBorder(
-      true, true, true, true, true, true,
-      colors.BORDER,
-      SpreadsheetApp.BorderStyle.SOLID
-    );
-
-  sheet.getRange(headerRow, 1, 1, 2).setHorizontalAlignment('left');
-  sheet.getRange(headerRow, 3, 1, 4).setHorizontalAlignment('center');
-  sheet.setRowHeight(headerRow, 28);
-
-  // 7. Todo Data Rows (Task Name & Project: Varela Round)
-  if (totalTodos > 0) {
-    const dataStartRow = headerRow + 1;
-    const requiredRows = dataStartRow + rows.length;
-    const maxRows = sheet.getMaxRows();
-    if (maxRows < requiredRows) {
-      sheet.insertRowsAfter(maxRows, requiredRows - maxRows);
-    }
-
-    sheet.getRange(dataStartRow, 1, rows.length, headers.length)
-      .setValues(rows)
-      .setFontSize(9)
-      .setVerticalAlignment('middle');
-
-    sheet.getRange(dataStartRow, 1, rows.length, 2)
-      .setFontFamily(textFont);
-
-    sheet.getRange(dataStartRow, 1, rows.length, 1)
-      .setHorizontalAlignment('left');
-    sheet.getRange(dataStartRow, 2, rows.length, 1)
-      .setHorizontalAlignment('left');
-
-    // Insert native checkboxes for quadrants in Cols 3 to 6
-    const checkboxRange = sheet.getRange(dataStartRow, 3, rows.length, 4);
-    checkboxRange
-      .insertCheckboxes()
-      .setHorizontalAlignment('center');
-
-    // Subtle cell borders across the data rows
-    sheet.getRange(dataStartRow, 1, rows.length, headers.length).setBorder(
-      null, true, true, true, true, true,
-      '#e2e8f0',
-      SpreadsheetApp.BorderStyle.SOLID
-    );
-
-    for (let r = 0; r < rows.length; r++) {
-      sheet.setRowHeight(dataStartRow + r, 26);
-    }
-
-    return dataStartRow + rows.length - 1;
-  } else {
-    const emptyRow = headerRow + 1;
-    const emptyRange = sheet.getRange(emptyRow, 1, 1, headers.length);
-    emptyRange
-      .merge()
-      .setValue('No tasks in Todo backlog. Add tasks in the Todo sheet to view them here.')
-      .setFontFamily(textFont)
-      .setFontSize(9)
-      .setFontStyle('italic')
-      .setFontColor(colors.MUTED_TEXT)
-      .setHorizontalAlignment('center')
-      .setVerticalAlignment('middle')
-      .setBorder(
-        null, true, true, true, null, null,
-        colors.BORDER,
-        SpreadsheetApp.BorderStyle.SOLID
-      );
-    sheet.setRowHeight(emptyRow, 32);
-    return emptyRow;
-  }
+  return cardStartRow + 2;
 }
 
 
@@ -1097,19 +952,19 @@ function getTodoTaskRows(ss) {
  */
 function formatDashboardSheet(sheet, lastRow) {
   const widths = [
-    280, // Col 1 (A): Month / Task Name (generous room for descriptive task names)
-    130, // Col 2 (B): Total / Project (generous room for project names)
-    105, // Col 3 (C): Done / Q1: Do (centered header + checkbox)
-    120, // Col 4 (D): Active / Q2: Schedule (centered header + checkbox, no clipping)
-    120, // Col 5 (E): Blocked / Q3: Delegate (centered header + checkbox, no clipping)
-    120, // Col 6 (F): Pending / Q4: Don't Do (centered header + checkbox, no clipping)
-    90,  // Col 7 (G): Progress
-    40,  // Col 8 (H): Spacer Gap
-    140, // Col 9 (I): Project
-    75,  // Col 10 (J): Tasks
-    75,  // Col 11 (K): Done
-    75,  // Col 12 (L): Pending
-    85   // Col 13 (M): Progress
+    130, // Col 1 (A): Month
+    80,  // Col 2 (B): Total
+    80,  // Col 3 (C): Done
+    80,  // Col 4 (D): Active
+    80,  // Col 5 (E): Blocked
+    80,  // Col 6 (F): Pending
+    95,  // Col 7 (G): Progress
+    45,  // Col 8 (H): Spacer Gap
+    150, // Col 9 (I): Project
+    80,  // Col 10 (J): Tasks
+    80,  // Col 11 (K): Done
+    80,  // Col 12 (L): Pending
+    95   // Col 13 (M): Progress
   ];
 
   widths.forEach((width, index) => {
@@ -1117,7 +972,7 @@ function formatDashboardSheet(sheet, lastRow) {
   });
 
   sheet.setFrozenRows(2);
-  sheet.setHideGridlines(true);
+  setSheetGridlinesHidden(sheet, true);
 
   const finalRows = Math.max(lastRow, 14);
   trimSheet(sheet, finalRows, CONFIG.DASHBOARD.COLUMNS_COUNT);

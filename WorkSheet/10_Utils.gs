@@ -245,6 +245,40 @@ function resolveDateInput(input, sheetName, timezone) {
 
 
 /**
+ * Safely toggles gridlines visibility on a sheet.
+ * In Google Apps Script, standard Sheet objects do not provide a native gridlines method.
+ * This function uses the Google Sheets Advanced API (Sheets.Spreadsheets.batchUpdate)
+ * if enabled, or fails gracefully without throwing an error.
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet The target sheet.
+ * @param {boolean} hidden Whether to hide gridlines (true) or show them (false).
+ */
+function setSheetGridlinesHidden(sheet, hidden) {
+  if (!sheet) return;
+  try {
+    if (typeof Sheets !== 'undefined' && Sheets && Sheets.Spreadsheets && Sheets.Spreadsheets.batchUpdate) {
+      const ssId = sheet.getParent().getId();
+      const sheetId = sheet.getSheetId();
+      Sheets.Spreadsheets.batchUpdate({
+        requests: [{
+          updateSheetProperties: {
+            properties: {
+              sheetId: sheetId,
+              gridlinesHidden: hidden
+            },
+            fields: 'gridlinesHidden'
+          }
+        }]
+      }, ssId);
+    }
+  } catch (err) {
+    // Advanced Service not enabled or insufficient permissions; fail gracefully
+    console.warn('Gridline toggle requires Google Sheets Advanced Service:', err);
+  }
+}
+
+
+/**
  * Hides gridlines across all sheets in the workbook for a clean app layout.
  *
  * @param {boolean} [suppressAlert=false] Whether to suppress the completion dialog.
@@ -252,7 +286,7 @@ function resolveDateInput(input, sheetName, timezone) {
 function hideGridlinesAllSheets(suppressAlert = false) {
   const ss = getSpreadsheet();
   ss.getSheets().forEach(sheet => {
-    sheet.setHideGridlines(true);
+    setSheetGridlinesHidden(sheet, true);
   });
 
   if (!suppressAlert) {
@@ -260,11 +294,10 @@ function hideGridlinesAllSheets(suppressAlert = false) {
       SpreadsheetApp.getUi().alert(
         'Gridlines Hidden\n\n' +
         'Gridlines have been hidden across all sheets for a sleek dashboard interface.\n\n' +
-        'Note on Formula Bar: The formula bar is controlled at the Google Sheets browser level. ' +
-        'To hide it, click in the top menu: View > Show > uncheck "Formula bar" (or press Ctrl + Shift + F for Full Screen).'
+        'Note: Gridline visibility can also be toggled manually in the Google Sheets top menu under: View > Show > uncheck "Gridlines" (or press Ctrl + Shift + F for Full Screen).'
       );
     } catch (err) {
-      ss.toast('Gridlines hidden across all sheets.', '⚡ View', 4);
+      ss.toast('Gridlines hidden across all sheets.', '⚡ Gridlines', 4);
     }
   }
 }
@@ -278,14 +311,14 @@ function hideGridlinesAllSheets(suppressAlert = false) {
 function showGridlinesAllSheets(suppressAlert = false) {
   const ss = getSpreadsheet();
   ss.getSheets().forEach(sheet => {
-    sheet.setHideGridlines(false);
+    setSheetGridlinesHidden(sheet, false);
   });
 
   if (!suppressAlert) {
     try {
       SpreadsheetApp.getUi().alert('Gridlines are now visible across all sheets.');
     } catch (err) {
-      ss.toast('Gridlines enabled across all sheets.', '⚡ View', 3);
+      ss.toast('Gridlines enabled across all sheets.', '⚡ Gridlines', 3);
     }
   }
 }

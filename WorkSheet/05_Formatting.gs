@@ -28,7 +28,7 @@ function formatWorkTracker(sheet) {
   formatColumns(sheet);
   formatDimensions(sheet);
   formatBorders(range);
-  sheet.setHideGridlines(true);
+  setSheetGridlinesHidden(sheet, true);
 }
 
 

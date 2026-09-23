@@ -46,8 +46,8 @@ WorkSheet/
 ├── 09_Tasks.gs                 # Task-level operations (row insertion, dropdown validation, task clearing)
 ├── 10_Utils.gs                 # Helper utilities for timezone, dates, sheet trimming, and ranges
 ├── 11_Todo.gs                  # Eisenhower Matrix Todo tracker with checkboxes and live stats row
-├── 12_Dashboard.gs             # Modern SaaS Command Center dashboard with live KPI cards and backlog
-└── 13_SampleData.gs            # Realistic dummy data generator for Month, Todo, and Dashboard
+├── 12_Dashboard.gs             # Modern SaaS Command Center dashboard with live KPI cards and tables
+├── 13_SampleData.gs            # Realistic dummy data generator for Month, Todo, and Dashboard
 ```
 
 ### File Responsibilities
@@ -61,12 +61,12 @@ WorkSheet/
 | **`04_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
 | **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for numbers/dates, `Varela Round` for headers and text), alignments, column widths, row heights, and borders. |
 | **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
-| **`07_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, `DSR`, `Dashboard`, and `View`. |
+| **`07_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, `DSR`, and `Dashboard`. |
 | **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
 | **`09_Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `saveTasksBatch`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
 | **`10_Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday`, `hideGridlinesAllSheets`, `showGridlinesAllSheets` | Common helper methods for trimming extra grid cells, fetching sheet context with timezone handling, and toggling workbook gridlines. |
 | **`11_Todo.gs`** | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns`, `handleTodoQuadrantExclusiveSelect` | Manages the Todo sheet with an Eisenhower Matrix structure: Row 1 live stats row (Total, Q1, Q2, Q3, Q4), Row 2 headers, and native checkboxes with single-selection radio logic. |
-| **`12_Dashboard.gs`** | `refreshDashboard`, `updateDashboardOnChange`, `handleDashboardTodoEdit`, `renderDashboardHeader`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern SaaS Command Center dashboard: 6 Work & Monthly KPI cards, side-by-side Monthly Breakdown and Project Performance tables, and 6 Eisenhower Matrix Todo stats cards with active backlog. Automatically updates on any workbook change. |
+| **`12_Dashboard.gs`** | `refreshDashboard`, `updateDashboardOnChange`, `handleDashboardTodoEdit`, `renderDashboardHeader`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern SaaS Command Center dashboard: 6 Work & Monthly KPI cards, side-by-side Monthly Breakdown and Project Performance tables, and 6 Eisenhower Matrix Todo stats cards. Automatically updates on any workbook change. |
 | **`13_SampleData.gs`** | `populateDummyData`, `addDummyData`, `populateTodoDummyData`, `populateMonthDummyData` | Seeds realistic sample data across Month sheet (21 tasks with diverse statuses) and Todo sheet (12 Eisenhower tasks) with live dashboard refresh. |
 
 ---
@@ -287,8 +287,8 @@ The Modern SaaS Command Center Dashboard automatically synchronizes in real time
 1. **Automatic Edit Trigger (`onEdit(e)`)**:
    - Registered in [`00_Code.gs`](./00_Code.gs) as a top-level global trigger.
    - When a cell in any **Month Sheet** (e.g., `SEP26`, `OCT26`) is modified (status, priority, task), `updateDashboardOnChange(e)` automatically recalculates metrics and updates the Dashboard without interrupting user focus.
-   - When a quadrant checkbox in the **Todo Sheet** is modified, `handleTodoQuadrantExclusiveSelect(e)` enforces single-selection radio logic and immediately updates the Dashboard's Todo KPI cards and active backlog table.
-   - When a quadrant checkbox directly on the **Dashboard Backlog** is clicked, `handleDashboardTodoEdit(e, ss)` updates the corresponding task in the `Todo` sheet and synchronizes the dashboard state.
+   - When a quadrant checkbox in the **Todo Sheet** is modified, `handleTodoQuadrantExclusiveSelect(e)` enforces single-selection radio logic and immediately updates the Dashboard's Todo KPI cards.
+   - Active tasks and checkbox selections are managed directly in the dedicated **Todo Sheet**, keeping the Dashboard as a clean, high-level executive analytics view.
 
 2. **Structural Change Trigger (`onChange(e)`)**:
    - Listens for sheet insertions, deletions, and structural changes to ensure metrics stay fresh.

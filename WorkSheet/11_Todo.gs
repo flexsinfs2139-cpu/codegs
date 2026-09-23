@@ -155,7 +155,7 @@ function formatTodoSheet(sheet) {
 
   // 5. Freeze top 2 rows (Stats row + Table headers) & hide gridlines
   sheet.setFrozenRows(2);
-  sheet.setHideGridlines(true);
+  setSheetGridlinesHidden(sheet, true);
 
   // 6. Enforce strict single-selection across all quadrants
   sanitizeAllTodoQuadrants(sheet);
