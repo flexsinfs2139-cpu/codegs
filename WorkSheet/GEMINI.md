@@ -28,6 +28,8 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | [`08_MonthSheet.gs`](./08_MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
 | [`09_Tasks.gs`](./09_Tasks.gs) | Task operations | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` |
 | [`10_Utils.gs`](./10_Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
+| [`11_Todo.gs`](./11_Todo.gs) | Eisenhower Matrix Todo tracker | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns` |
+| [`12_Dashboard.gs`](./12_Dashboard.gs) | Todo & Month status overview | `refreshDashboard`, `writeDashboardHeader`, `writeTodoSection`, `writeMonthStatusSection` |
 | [`README.md`](./README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
 
 ---
@@ -52,13 +54,20 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - Automatically populates Date and Day, updates the existing date row or inserts subsequent rows with the same Date/Day, and applies formatting and dropdowns.
 5. **Resolved Architectural Review Items**:
    - Date Format Divergence resolved: Added unified `CONFIG.DATE_FORMAT: 'MMdd'`.
-   - `clearTasks()` Target Safety resolved: Clears columns 3-7 on month sheets and is blocked on the `Lists` sheet.
+   - `clearTasks()` Target Safety resolved: Clears columns 3-7 on month sheets and is blocked on `Lists`, `Todo`, and `Dashboard` sheets.
 6. **Visual Calendar Date Picker**:
    - Implemented `01_CalendarPicker.gs` providing an interactive monthly calendar widget for choosing dates apart from today.
    - Connected to both `Tasks -> Fill task for selected date in the current month` and `DSR -> Generate DSR for selected date in the month`.
    - Added native calendar datepicker input directly into the Task Entry modal and the DSR modal (allowing real-time report refreshing across dates).
 7. **Two-Digit Alphabetical File Ordering**:
-   - Except `00_Code.gs` which is first, all other `.gs` files are named alphabetically with standard 0-prefixed two-digit numbering (`01_CalendarPicker.gs` through `10_Utils.gs`) ensuring structured alphabetical and numerical ordering in the Google Apps Script IDE.
+   - Standard 0-prefixed two-digit numbering (`00_Code.gs` through `12_Dashboard.gs`) ensuring structured alphabetical and numerical ordering in the Google Apps Script IDE.
+8. **Eisenhower Matrix Todo Sheet & Live Stats Row**:
+   - Built `11_Todo.gs` implementing the Eisenhower Matrix decision framework.
+   - Table Schema (Row 2 headers): `Task Name`, `Project`, `Q1: Do`, `Q2: Schedule`, `Q3: Delegate`, `Q4: Don't Do`.
+   - Row 1 Live Stats Bar: Frozen at the top displaying real-time formula-driven task counters for `Total Tasks`, `Q1 (Do)`, `Q2 (Schedule)`, `Q3 (Delegate)`, and `Q4 (Don't Do)`.
+   - Native Google Sheets checkboxes for all 4 quadrants with conditional formatting colors (Q1 soft red, Q2 soft blue, Q3 soft yellow, Q4 soft gray).
+   - Project dropdown validation from `Lists` sheet.
+   - Integrated into `12_Dashboard.gs` with quadrant counts and interactive checkboxes.
 
 ---
 

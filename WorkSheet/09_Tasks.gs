@@ -340,8 +340,12 @@ function clearTasks() {
   const ss = getSpreadsheet();
   const sheet = ss.getActiveSheet();
 
-  if (sheet.getName() === CONFIG.LISTS_SHEET_NAME) {
-    ui.alert('Cannot clear tasks on the Lists sheet.');
+  if (
+    sheet.getName() === CONFIG.LISTS_SHEET_NAME ||
+    sheet.getName() === CONFIG.TODO_SHEET_NAME ||
+    sheet.getName() === CONFIG.DASHBOARD_SHEET_NAME
+  ) {
+    ui.alert(`Cannot clear tasks on the ${sheet.getName()} sheet.`);
     return;
   }
 

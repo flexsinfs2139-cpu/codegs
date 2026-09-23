@@ -76,9 +76,14 @@ function writeTodoSection(sheet, ss, startRow) {
   const rows = getTodoTaskRows(ss);
   const headers = CONFIG.TODO_HEADERS;
 
+  const q1Count = rows.filter(r => r[2] === true).length;
+  const q2Count = rows.filter(r => r[3] === true).length;
+  const q3Count = rows.filter(r => r[4] === true).length;
+  const q4Count = rows.filter(r => r[5] === true).length;
+
   sheet.getRange(startRow, 1, 1, headers.length)
     .merge()
-    .setValue(`📝 Todo Tasks (${rows.length})`)
+    .setValue(`📝 Todo Tasks (${rows.length}) — Q1: ${q1Count} | Q2: ${q2Count} | Q3: ${q3Count} | Q4: ${q4Count}`)
     .setFontFamily('Arial')
     .setFontWeight('bold')
     .setBackground(CONFIG.COLORS.HEADER);
@@ -86,11 +91,15 @@ function writeTodoSection(sheet, ss, startRow) {
   sheet.getRange(startRow + 1, 1, 1, headers.length)
     .setValues([headers])
     .setFontFamily('Arial')
-    .setFontWeight('bold');
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
 
   if (rows.length > 0) {
     sheet.getRange(startRow + 2, 1, rows.length, headers.length)
       .setValues(rows);
+
+    sheet.getRange(startRow + 2, 3, rows.length, 4)
+      .insertCheckboxes();
   }
 
   return startRow + 1 + Math.max(rows.length, 1);
@@ -142,18 +151,24 @@ function writeMonthStatusSection(sheet, ss, startRow) {
 
 
 /**
- * Returns non-empty Todo rows (Task Name, Project, Priority) from the
+ * Returns non-empty Todo rows (Task Name, Project, Q1–Q4) from the
  * existing Todo sheet, or an empty array if it doesn't exist yet.
+ * Skips the top 2 rows (Stats row and Header row).
  */
 function getTodoTaskRows(ss) {
   const sheet = ss.getSheetByName(CONFIG.TODO_SHEET_NAME);
 
-  if (!sheet || sheet.getLastRow() < 2) {
+  if (!sheet || sheet.getLastRow() < CONFIG.TODO_FIRST_DATA_ROW) {
+    return [];
+  }
+
+  const numRows = sheet.getLastRow() - CONFIG.TODO_HEADER_ROW;
+  if (numRows <= 0) {
     return [];
   }
 
   const values = sheet
-    .getRange(2, 1, sheet.getLastRow() - 1, CONFIG.TODO_HEADERS.length)
+    .getRange(CONFIG.TODO_FIRST_DATA_ROW, 1, numRows, CONFIG.TODO_HEADERS.length)
     .getValues();
 
   return values.filter(row => String(row[0] || '').trim() !== '');
@@ -204,7 +219,10 @@ function computeMonthStatusCounts(monthSheet) {
 function formatDashboardSheet(sheet) {
   sheet.setColumnWidth(1, 300);
   sheet.setColumnWidth(2, 130);
-  sheet.setColumnWidth(3, 100);
+  sheet.setColumnWidth(3, 110);
+  sheet.setColumnWidth(4, 110);
+  sheet.setColumnWidth(5, 110);
+  sheet.setColumnWidth(6, 110);
 
   sheet.setFrozenRows(2);
 

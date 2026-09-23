@@ -36,7 +36,7 @@ The project is structured into 11 modular `.gs` files:
 WorkSheet/
 ├── 00_Code.gs                  # High-level entry points and orchestration routines
 ├── 01_CalendarPicker.gs        # Interactive visual calendar date picker engine for Tasks and DSR
-├── 02_ConditionalFormatting.gs # Priority, status, and weekend row conditional formatting rules
+├── 02_ConditionalFormatting.gs # Priority, status, weekend row, and Eisenhower Matrix conditional rules
 ├── 03_Config.gs                # Central configuration for headers, lists, colors, dimensions
 ├── 04_DSR.gs                   # Daily Status Report generator, parser, and interactive modal dialog
 ├── 05_Formatting.gs            # Visual layout, font hierarchy, column widths, row heights, borders
@@ -44,7 +44,9 @@ WorkSheet/
 ├── 07_Menu.gs                  # Custom UI menus registered via `onOpen()`
 ├── 08_MonthSheet.gs            # Monthly sheet creation, day row generation, and layout assembly
 ├── 09_Tasks.gs                 # Task-level operations (row insertion, dropdown validation, task clearing)
-└── 10_Utils.gs                 # Helper utilities for timezone, dates, sheet trimming, and ranges
+├── 10_Utils.gs                 # Helper utilities for timezone, dates, sheet trimming, and ranges
+├── 11_Todo.gs                  # Eisenhower Matrix Todo tracker with checkboxes and live stats row
+└── 12_Dashboard.gs             # Central dashboard aggregating Todo matrix and monthly status counts
 ```
 
 ### File Responsibilities
@@ -53,15 +55,17 @@ WorkSheet/
 | :--- | :--- | :--- |
 | **`00_Code.gs`** | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` | Serves as the operational entry point coordinating setup across modules. |
 | **`01_CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` | Provides an interactive monthly visual calendar widget to visually select dates for Tasks and DSR workflows without text prompts. |
-| **`02_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting` | Creates color-coded conditional formatting rules for Statuses (In Progress, Completed, Blocked, Cancelled), Priorities (Urgent, High, Medium), and weekend rows (Saturday, Sunday). |
-| **`03_Config.gs`** | `CONFIG` object | Stores global variables, header names, default tasks per day, default colors, and array values for Projects, Categories, Priorities, and Statuses. |
+| **`02_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `textRule`, `setupWeekendFormatting`, `setupTodoConditionalFormatting` | Creates color-coded conditional formatting rules for Statuses, Priorities, weekend rows, and Eisenhower Matrix quadrants. |
+| **`03_Config.gs`** | `CONFIG` object | Stores global variables, header names, colors, and array values for Projects, Categories, Priorities, Statuses, and Eisenhower Matrix quadrants. |
 | **`04_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles status reports by project, formats text, and presents interactive modal with date switcher, copy, save, and download actions. |
 | **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies typography (`Roboto Mono` for dates/days, `Arial` for content), alignments, column widths, row heights, and borders. |
 | **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `resetListsSheet`, `writeLists`, `formatListsSheet`, `createNamedRanges`, `removeNamedRanges`, `trimListsSheet`, `protectListsSheet`, `removeListsProtection` | Manages the `Lists` sheet which houses dropdown options, generates named ranges consumed by validation rules, trims whitespace, and applies sheet protection. |
-| **`07_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, and `DSR`. |
+| **`07_Menu.gs`** | `onOpen` | Injects custom menus into Google Sheets UI upon opening: `Month Sheet`, `Setup`, `Tasks`, `DSR`, and `Dashboard`. |
 | **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Generates a new sheet for the current month (e.g., `SEP26`), fills each day of the month with default task rows, and applies all styling rules. |
 | **`09_Tasks.gs`** | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` | Applies data validation rules to task rows using named ranges, appends individual task rows with prefilled dates, and resets task content. |
 | **`10_Utils.gs`** | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Common helper methods for trimming extra grid cells and fetching sheet context with proper timezone handling. |
+| **`11_Todo.gs`** | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns` | Manages the Todo sheet with an Eisenhower Matrix structure: Row 1 live stats row (Total, Q1, Q2, Q3, Q4), Row 2 headers, and native checkboxes for Q1 Do, Q2 Schedule, Q3 Delegate, and Q4 Don't Do. |
+| **`12_Dashboard.gs`** | `refreshDashboard`, `writeDashboardHeader`, `writeTodoSection`, `writeMonthStatusSection`, `getTodoTaskRows` | Aggregates all Todo tasks with live Eisenhower matrix quadrant counts and current month task counts by status into a unified visual summary. |
 
 ---
 
@@ -164,10 +168,12 @@ WorkSheet/
 | :--- | :--- | :--- | :--- |
 | **Month Sheet** | Create Current Month | `createCurrentMonthSheet` | Generates the current month sheet with days, default Pending statuses, and styling. |
 | **Setup** | Create Lists Sheet | `createListsSheet` | Resets and rebuilds the reference Lists sheet and named ranges. |
+| **Setup** | Create Todo Sheet | `createTodoSheet` | Creates or refreshes the Todo sheet with Eisenhower Matrix (Row 1 live stats, Row 2 headers, checkboxes, and project dropdown). |
 | **Tasks** | Fill task for today | `fillTaskForToday` | Opens the fast modal dialog to enter single/multiple tasks for today by project, category, and priority. |
 | **Tasks** | Fill task for selected date in the current month | `fillTaskForSelectedDate` | Opens the visual interactive calendar to choose any date, then opens the task entry dialog with automatic Pending status. |
 | **DSR** | Generate DSR for today | `generateDSRForToday` | Opens an interactive modal dialog showing today's status report formatted by project with options to copy to clipboard, save to sheet, or download `.txt`. |
 | **DSR** | Generate DSR for selected date in the month | `generateDSRForSelectedDate` | Opens the visual interactive calendar to choose any date and generate the DSR, with in-modal date switching support. |
+| **Dashboard** | Refresh Dashboard | `refreshDashboard` | Rebuilds the central dashboard showing Todo tasks with Eisenhower quadrant counts & checkboxes, and month status breakdown. |
 
 ---
 
@@ -181,6 +187,21 @@ const CONFIG = {
   DATE_FORMAT: 'MMdd',
   DEFAULT_TASKS_PER_DAY: 1,      // Number of rows generated per day
   LISTS_SHEET_NAME: 'Lists',     // Name of reference sheet
+  TODO_SHEET_NAME: 'Todo',
+  TODO_DROPDOWN_ROWS: 200,
+  TODO_STAT_ROW: 1,
+  TODO_HEADER_ROW: 2,
+  TODO_FIRST_DATA_ROW: 3,
+  DASHBOARD_SHEET_NAME: 'Dashboard',
+
+  TODO_HEADERS: [
+    'Task Name',
+    'Project',
+    'Q1: Do',
+    'Q2: Schedule',
+    'Q3: Delegate',
+    'Q4: Don\'t Do'
+  ],
 
   HEADERS: [
     'Date', 'Day', 'Project', 'Task', 'Category', 'Priority', 'Status'
@@ -188,7 +209,17 @@ const CONFIG = {
 
   COLORS: {
     HEADER: '#d9ead3',
-    BORDER: '#d9d9d9'
+    BORDER: '#d9d9d9',
+    STATS_BG: '#f8f9fa',
+    STATS_BORDER: '#e2e8f0',
+    Q1_BG: '#fce8e6',
+    Q1_TEXT: '#c5221f',
+    Q2_BG: '#e8f0fe',
+    Q2_TEXT: '#1a73e8',
+    Q3_BG: '#fef7e0',
+    Q3_TEXT: '#b06000',
+    Q4_BG: '#f1f3f4',
+    Q4_TEXT: '#5f6368'
   },
 
   LISTS: {
