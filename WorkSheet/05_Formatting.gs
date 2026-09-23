@@ -17,7 +17,7 @@ function formatWorkTracker(sheet) {
     );
 
   range
-    .setFontFamily('Arial')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setFontSize(10)
     .setVerticalAlignment('middle')
     .setWrapStrategy(
@@ -28,6 +28,7 @@ function formatWorkTracker(sheet) {
   formatColumns(sheet);
   formatDimensions(sheet);
   formatBorders(range);
+  sheet.setHideGridlines(true);
 }
 
 
@@ -40,7 +41,7 @@ function formatHeader(sheet) {
       CONFIG.HEADERS.length
     )
     .setBackground(CONFIG.COLORS.HEADER)
-    .setFontFamily('Arial')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setFontWeight('bold')
     .setHorizontalAlignment('center');
 }
@@ -49,7 +50,7 @@ function formatHeader(sheet) {
 function formatColumns(sheet) {
   sheet
     .getRange('A:A')
-    .setFontFamily('Roboto Mono')
+    .setFontFamily(CONFIG.FONTS.DIGITS)
     .setFontSize(10)
     .setFontWeight('bold')
     .setHorizontalAlignment('center')
@@ -57,7 +58,7 @@ function formatColumns(sheet) {
 
   sheet
     .getRange('B:B')
-    .setFontFamily('Roboto Mono')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setHorizontalAlignment('center');
 
   sheet.getRange('C:C')

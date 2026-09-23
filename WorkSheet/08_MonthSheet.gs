@@ -1,4 +1,4 @@
-function createCurrentMonthSheet() {
+function createCurrentMonthSheet(suppressAlert) {
   const ss = getSpreadsheet();
   const timezone = getTimezone();
   const today = getToday();
@@ -18,9 +18,11 @@ function createCurrentMonthSheet() {
   if (existingSheet) {
     ss.setActiveSheet(existingSheet);
 
-    SpreadsheetApp.getUi().alert(
-      `${sheetName} already exists.`
-    );
+    if (!suppressAlert) {
+      SpreadsheetApp.getUi().alert(
+        `${sheetName} already exists.`
+      );
+    }
 
     return;
   }
@@ -52,9 +54,11 @@ function createCurrentMonthSheet() {
 
   ss.setActiveSheet(sheet);
 
-  SpreadsheetApp.getUi().alert(
-    `${sheetName} created successfully.`
-  );
+  if (!suppressAlert) {
+    SpreadsheetApp.getUi().alert(
+      `${sheetName} created successfully.`
+    );
+  }
 }
 
 

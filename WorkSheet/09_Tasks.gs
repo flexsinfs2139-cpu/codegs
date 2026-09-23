@@ -213,14 +213,20 @@ function saveTasksBatch(payload) {
 
       monthSheet
         .getRange(newRow, 1, 1, CONFIG.HEADERS.length)
-        .setFontFamily('Arial')
+        .setFontFamily(CONFIG.FONTS.TEXT)
         .setFontSize(10)
         .setVerticalAlignment('middle')
         .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
 
       monthSheet
-        .getRange(newRow, 1, 1, 2)
-        .setFontFamily('Roboto Mono')
+        .getRange(newRow, 1)
+        .setFontFamily(CONFIG.FONTS.DIGITS)
+        .setFontWeight('bold')
+        .setHorizontalAlignment('center');
+
+      monthSheet
+        .getRange(newRow, 2)
+        .setFontFamily(CONFIG.FONTS.TEXT)
         .setFontWeight('bold')
         .setHorizontalAlignment('center');
 
@@ -259,6 +265,13 @@ function saveTasksBatch(payload) {
   // Refocus user on the month sheet and highlight the added row
   ss.setActiveSheet(monthSheet);
   monthSheet.setActiveSelection(`D${firstSavedRow}`);
+
+  // Automatically update the Command Center Dashboard in the background
+  try {
+    updateDashboardOnChange();
+  } catch (err) {
+    console.warn('Dashboard auto-update skipped:', err);
+  }
 
   return {
     success: true,
@@ -373,6 +386,13 @@ function clearTasks() {
   sheet
     .getRange(2, 7, lastRow - 1, 1)
     .setValue('Pending');
+
+  // Automatically update the Command Center Dashboard in the background
+  try {
+    updateDashboardOnChange();
+  } catch (err) {
+    console.warn('Dashboard auto-update skipped:', err);
+  }
 }
 
 /**

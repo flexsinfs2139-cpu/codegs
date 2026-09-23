@@ -26,6 +26,15 @@ function onOpen() {
       'Create Todo Sheet',
       'createTodoSheet'
     )
+    .addItem(
+      'Enforce Single Todo Quadrant',
+      'sanitizeAllTodoQuadrants'
+    )
+    .addSeparator()
+    .addItem(
+      'Populate Dummy Data',
+      'populateDummyData'
+    )
     .addToUi();
 
 
@@ -69,6 +78,22 @@ function onOpen() {
     .addItem(
       'Refresh Dashboard',
       'refreshDashboard'
+    )
+    .addToUi();
+
+
+  // ==========================================================
+  // VIEW
+  // ==========================================================
+
+  ui.createMenu('View')
+    .addItem(
+      'Hide Gridlines (All Sheets)',
+      'hideGridlinesAllSheets'
+    )
+    .addItem(
+      'Show Gridlines (All Sheets)',
+      'showGridlinesAllSheets'
     )
     .addToUi();
 }

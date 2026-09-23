@@ -1,4 +1,4 @@
-function createListsSheet() {
+function createListsSheet(suppressAlert) {
   const ss = getSpreadsheet();
 
   const sheet = resetListsSheet(ss);
@@ -11,9 +11,11 @@ function createListsSheet() {
 
   ss.setActiveSheet(sheet);
 
-  SpreadsheetApp.getUi().alert(
-    'Lists sheet created successfully.'
-  );
+  if (!suppressAlert) {
+    SpreadsheetApp.getUi().alert(
+      'Lists sheet created successfully.'
+    );
+  }
 }
 
 
@@ -26,7 +28,7 @@ function ensureListsSheet(ss) {
     return sheet;
   }
 
-  createListsSheet();
+  createListsSheet(true);
 
   return ss.getSheetByName(
     CONFIG.LISTS_SHEET_NAME
@@ -99,7 +101,7 @@ function formatListsSheet(sheet) {
       lastCol
     )
     .setBackground(CONFIG.COLORS.HEADER)
-    .setFontFamily('Arial')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setFontWeight('bold')
     .setHorizontalAlignment('center');
 
@@ -110,7 +112,7 @@ function formatListsSheet(sheet) {
       lastRow,
       lastCol
     )
-    .setFontFamily('Arial')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setVerticalAlignment('middle');
 
   sheet.setFrozenRows(1);

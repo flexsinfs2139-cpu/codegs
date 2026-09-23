@@ -1,6 +1,6 @@
 # Antigravity Context & Project Memory — WorkSheet
 
-This file serves as persistent memory and context for Antigravity (the equivalent of `CLAUDE.md` / `.claude` in Claude). It is automatically loaded into the agent's context window on every turn to retain conversation history, architectural decisions, and project conventions.
+This file serves as persistent memory and context for Antigravity (the equivalent of `CLAUDE.md` / `.claude` in Claude). It is automatically discovered and loaded into the agent's context window on every turn to retain conversation history, architectural decisions, and project conventions across sessions.
 
 ---
 
@@ -8,7 +8,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 
 - **Project**: WorkSheet (Google Apps Script)
 - **Host Platform**: Google Sheets
-- **Target Repository**: `/home/rvkt/Documents/codegs/WorkSheet`
+- **Location**: `/home/rvkt/Documents/codegs/WorkSheet`
 - **Purpose**: Automated work tracker managing daily tasks, project assignments, priorities, and statuses with dynamic monthly sheet generation, protected reference lists, and custom UI formatting.
 
 ---
@@ -17,20 +17,21 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 
 | File | Primary Role | Key Functions / Objects |
 | :--- | :--- | :--- |
-| [`00_Code.gs`](./00_Code.gs) | Main entry points | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` |
-| [`01_CalendarPicker.gs`](./01_CalendarPicker.gs) | Visual calendar date picker | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
-| [`02_ConditionalFormatting.gs`](./02_ConditionalFormatting.gs) | Dynamic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
-| [`03_Config.gs`](./03_Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Row Heights) |
-| [`04_DSR.gs`](./04_DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
-| [`05_Formatting.gs`](./05_Formatting.gs) | Visual layout & styling | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` |
-| [`06_Lists.gs`](./06_Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
-| [`07_Menu.gs`](./07_Menu.gs) | Toolbar UI menus | `onOpen` (creates `Month Sheet`, `Setup`, `Tasks`, `DSR`) |
-| [`08_MonthSheet.gs`](./08_MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
-| [`09_Tasks.gs`](./09_Tasks.gs) | Task operations | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` |
-| [`10_Utils.gs`](./10_Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
-| [`11_Todo.gs`](./11_Todo.gs) | Eisenhower Matrix Todo tracker | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns` |
-| [`12_Dashboard.gs`](./12_Dashboard.gs) | Todo & Month status overview | `refreshDashboard`, `writeDashboardHeader`, `writeTodoSection`, `writeMonthStatusSection` |
-| [`README.md`](./README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
+| [`WorkSheet/00_Code.gs`](./WorkSheet/00_Code.gs) | Main entry points | `initializeWorkTracker`, `setupWorkTracker`, `rebuildLists` |
+| [`WorkSheet/01_CalendarPicker.gs`](./WorkSheet/01_CalendarPicker.gs) | Visual calendar date picker | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
+| [`WorkSheet/02_ConditionalFormatting.gs`](./WorkSheet/02_ConditionalFormatting.gs) | Dynamic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
+| [`WorkSheet/03_Config.gs`](./WorkSheet/03_Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Row Heights) |
+| [`WorkSheet/04_DSR.gs`](./WorkSheet/04_DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
+| [`WorkSheet/05_Formatting.gs`](./WorkSheet/05_Formatting.gs) | Visual layout & styling | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` |
+| [`WorkSheet/06_Lists.gs`](./WorkSheet/06_Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
+| [`WorkSheet/07_Menu.gs`](./WorkSheet/07_Menu.gs) | Toolbar UI menus | `onOpen` (creates `Month Sheet`, `Setup`, `Tasks`, `DSR`) |
+| [`WorkSheet/08_MonthSheet.gs`](./WorkSheet/08_MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
+| [`WorkSheet/09_Tasks.gs`](./WorkSheet/09_Tasks.gs) | Task operations | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` |
+| [`WorkSheet/10_Utils.gs`](./WorkSheet/10_Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
+| [`WorkSheet/11_Todo.gs`](./WorkSheet/11_Todo.gs) | Eisenhower Matrix Todo tracker | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns` |
+| [`WorkSheet/12_Dashboard.gs`](./WorkSheet/12_Dashboard.gs) | Modern SaaS Command Center | `refreshDashboard`, `renderDashboardHeader`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` |
+| [`WorkSheet/13_SampleData.gs`](./WorkSheet/13_SampleData.gs) | Sample & dummy data engine | `populateDummyData`, `addDummyData`, `populateTodoDummyData`, `populateMonthDummyData` |
+| [`WorkSheet/README.md`](./WorkSheet/README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
 
 ---
 
@@ -38,7 +39,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 
 ### What Has Been Completed:
 1. **Full Codebase Review**: Completed a deep-dive analysis of all Apps Script files.
-2. **Documentation**: Authored the full [`README.md`](./README.md) for the `WorkSheet` directory.
+2. **Documentation**: Authored the full [`WorkSheet/README.md`](./WorkSheet/README.md).
 3. **DSR Generation & Modal Dialog**:
    - Implemented `04_DSR.gs` to extract tasks by date, categorize by project into Tasks Completed, Work in Progress, Blockers/Issues, and Plan for Next Working Day.
    - Built styled HTML modal dialog matching the user's UI specification (`Copy to Clipboard`, `Save to Sheet`, `Download .txt`, `Close`).
@@ -68,12 +69,37 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - Native Google Sheets checkboxes for all 4 quadrants with conditional formatting colors (Q1 soft red, Q2 soft blue, Q3 soft yellow, Q4 soft gray).
    - Project dropdown validation from `Lists` sheet.
    - Integrated into `12_Dashboard.gs` with quadrant counts and interactive checkboxes.
+9. **Mutually Exclusive Quadrant Radio-Button Behavior**:
+   - Implemented `onEdit(e)` trigger in `11_Todo.gs` ensuring only one Eisenhower quadrant column (Q1, Q2, Q3, or Q4) can be selected per task row, automatically unchecking previous selections.
+10. **Silent Initialization & Integrated Todo Setup**:
+    - `initializeWorkTracker()` in `00_Code.gs` automatically provisions `Lists`, `Todo` (with Eisenhower Matrix), and the `Current Month` sheet silently without any blocking alert dialogs (`suppressAlert = true`).
+11. **Typography Standards (`Varela Round` & `Roboto Mono`)**:
+    - Centralized in `CONFIG.FONTS = { TEXT: 'Varela Round', DIGITS: 'Roboto Mono' }`.
+    - Applied universally across all sheets: `Varela Round` for titles, headers, labels, and text descriptions; `Roboto Mono` for numbers, KPI digits, dates, percentages, and live counters.
+12. **Real-Time Dashboard Auto-Update Engine**:
+    - Centralized global `onEdit(e)` and `onChange(e)` triggers in `00_Code.gs`.
+    - Implemented `updateDashboardOnChange(e)` in `12_Dashboard.gs` to automatically refresh the Dashboard whenever edits occur across Month sheets, Todo sheet, or Lists sheet.
+    - Operates silently (`suppressAlert = true`) and preserves the user's active sheet (`keepActiveSheet = true`) so data entry is uninterrupted.
+    - Synchronizes edits made directly on the Dashboard's Todo Backlog table back to the `Todo` sheet.
+    - Linked `saveTasksBatch()` and `clearTasks()` in `09_Tasks.gs` and `initializeWorkTracker()` in `00_Code.gs` for programmatic freshness.
+13. **Comprehensive Sample/Dummy Data Seeding & Todo Backlog Horizontal Spacing**:
+    - Built [`13_SampleData.gs`](./WorkSheet/13_SampleData.gs) to seed realistic dummy data across Month and Todo sheets with 1 click.
+    - Month sheet seeded with 21 engineering tasks spanning all projects, categories, priorities, and statuses (`Completed`, `In Progress`, `Blocked`, `Pending`).
+    - Todo sheet seeded with 12 prioritized tasks mapped to Eisenhower Matrix quadrants (Q1: 3, Q2: 4, Q3: 3, Q4: 2) with strict mutual exclusivity.
+    - Added `Setup -> Populate Dummy Data` menu action in `07_Menu.gs`.
+    - Solved Todo Backlog horizontal cramping on Dashboard: increased column widths (Col A: 280px, Col B: 130px, Col C: 105px, Cols D–F: 120px) preventing any header overlapping or truncation.
+    - Aligned Todo Backlog banner and table cleanly to 6 columns (A–F) with subtle borders and left-aligned task/project headers.
+14. **Clean Canvas UI (Hidden Gridlines & Formula Bar Architecture)**:
+    - Automatically hides gridlines across Dashboard, Todo, and Month sheets via `sheet.setHideGridlines(true)`.
+    - Added subtle `#e2e8f0` row borders to Monthly Breakdown, Project Performance, and Todo Backlog so data is structured and readable on a seamless canvas.
+    - Added `View -> Hide Gridlines (All Sheets)` and `View -> Show Gridlines (All Sheets)` toolbar menu actions in `07_Menu.gs` and `10_Utils.gs`.
+    - Documented Google Sheets browser UI architecture for the formula bar: formula bar visibility is a user-level browser setting (toggled via `View -> Show -> Formula bar` or `Ctrl + Shift + F` for Full Screen mode) which Google Apps Script cannot access via API.
 
 ---
 
 ## 4. Development & Coding Guidelines
 
-- **Configuration First**: Never hardcode list values or colors; always define them inside `CONFIG` in [`03_Config.gs`](./03_Config.gs).
+- **Configuration First**: Never hardcode list values or colors; always define them inside `CONFIG` in [`WorkSheet/03_Config.gs`](./WorkSheet/03_Config.gs).
 - **Batch Operations**: Use `setValues()` and `getValues()` in bulk; avoid calling Google Sheets APIs inside loops.
 - **Timezone Handling**: Always derive the timezone via `getTimezone()` (`getSpreadsheetTimeZone()`) rather than assuming UTC or local server time.
 - **Sheet Bounds**: Always run `trimSheet()` on newly inserted sheets to remove surplus empty rows and columns for sheet responsiveness.

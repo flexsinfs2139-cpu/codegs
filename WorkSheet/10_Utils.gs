@@ -242,3 +242,50 @@ function resolveDateInput(input, sheetName, timezone) {
 
   return null;
 }
+
+
+/**
+ * Hides gridlines across all sheets in the workbook for a clean app layout.
+ *
+ * @param {boolean} [suppressAlert=false] Whether to suppress the completion dialog.
+ */
+function hideGridlinesAllSheets(suppressAlert = false) {
+  const ss = getSpreadsheet();
+  ss.getSheets().forEach(sheet => {
+    sheet.setHideGridlines(true);
+  });
+
+  if (!suppressAlert) {
+    try {
+      SpreadsheetApp.getUi().alert(
+        'Gridlines Hidden\n\n' +
+        'Gridlines have been hidden across all sheets for a sleek dashboard interface.\n\n' +
+        'Note on Formula Bar: The formula bar is controlled at the Google Sheets browser level. ' +
+        'To hide it, click in the top menu: View > Show > uncheck "Formula bar" (or press Ctrl + Shift + F for Full Screen).'
+      );
+    } catch (err) {
+      ss.toast('Gridlines hidden across all sheets.', '⚡ View', 4);
+    }
+  }
+}
+
+
+/**
+ * Shows gridlines across all sheets in the workbook.
+ *
+ * @param {boolean} [suppressAlert=false] Whether to suppress the completion dialog.
+ */
+function showGridlinesAllSheets(suppressAlert = false) {
+  const ss = getSpreadsheet();
+  ss.getSheets().forEach(sheet => {
+    sheet.setHideGridlines(false);
+  });
+
+  if (!suppressAlert) {
+    try {
+      SpreadsheetApp.getUi().alert('Gridlines are now visible across all sheets.');
+    } catch (err) {
+      ss.toast('Gridlines enabled across all sheets.', '⚡ View', 3);
+    }
+  }
+}

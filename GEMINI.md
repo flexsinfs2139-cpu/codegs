@@ -29,7 +29,8 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | [`WorkSheet/09_Tasks.gs`](./WorkSheet/09_Tasks.gs) | Task operations | `setupDropdowns`, `createDropdownRule`, `addTaskRow`, `clearTasks` |
 | [`WorkSheet/10_Utils.gs`](./WorkSheet/10_Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` |
 | [`WorkSheet/11_Todo.gs`](./WorkSheet/11_Todo.gs) | Eisenhower Matrix Todo tracker | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `setupTodoCheckboxes`, `setupTodoDropdowns` |
-| [`WorkSheet/12_Dashboard.gs`](./WorkSheet/12_Dashboard.gs) | Todo & Month status overview | `refreshDashboard`, `writeDashboardHeader`, `writeTodoSection`, `writeMonthStatusSection` |
+| [`WorkSheet/12_Dashboard.gs`](./WorkSheet/12_Dashboard.gs) | Modern SaaS Command Center | `refreshDashboard`, `renderDashboardHeader`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` |
+| [`WorkSheet/13_SampleData.gs`](./WorkSheet/13_SampleData.gs) | Sample & dummy data engine | `populateDummyData`, `addDummyData`, `populateTodoDummyData`, `populateMonthDummyData` |
 | [`WorkSheet/README.md`](./WorkSheet/README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet system |
 
 ---
@@ -68,6 +69,31 @@ This file serves as persistent memory and context for Antigravity (the equivalen
    - Native Google Sheets checkboxes for all 4 quadrants with conditional formatting colors (Q1 soft red, Q2 soft blue, Q3 soft yellow, Q4 soft gray).
    - Project dropdown validation from `Lists` sheet.
    - Integrated into `12_Dashboard.gs` with quadrant counts and interactive checkboxes.
+9. **Mutually Exclusive Quadrant Radio-Button Behavior**:
+   - Implemented `onEdit(e)` trigger in `11_Todo.gs` ensuring only one Eisenhower quadrant column (Q1, Q2, Q3, or Q4) can be selected per task row, automatically unchecking previous selections.
+10. **Silent Initialization & Integrated Todo Setup**:
+    - `initializeWorkTracker()` in `00_Code.gs` automatically provisions `Lists`, `Todo` (with Eisenhower Matrix), and the `Current Month` sheet silently without any blocking alert dialogs (`suppressAlert = true`).
+11. **Typography Standards (`Varela Round` & `Roboto Mono`)**:
+    - Centralized in `CONFIG.FONTS = { TEXT: 'Varela Round', DIGITS: 'Roboto Mono' }`.
+    - Applied universally across all sheets: `Varela Round` for titles, headers, labels, and text descriptions; `Roboto Mono` for numbers, KPI digits, dates, percentages, and live counters.
+12. **Real-Time Dashboard Auto-Update Engine**:
+    - Centralized global `onEdit(e)` and `onChange(e)` triggers in `00_Code.gs`.
+    - Implemented `updateDashboardOnChange(e)` in `12_Dashboard.gs` to automatically refresh the Dashboard whenever edits occur across Month sheets, Todo sheet, or Lists sheet.
+    - Operates silently (`suppressAlert = true`) and preserves the user's active sheet (`keepActiveSheet = true`) so data entry is uninterrupted.
+    - Synchronizes edits made directly on the Dashboard's Todo Backlog table back to the `Todo` sheet.
+    - Linked `saveTasksBatch()` and `clearTasks()` in `09_Tasks.gs` and `initializeWorkTracker()` in `00_Code.gs` for programmatic freshness.
+13. **Comprehensive Sample/Dummy Data Seeding & Todo Backlog Horizontal Spacing**:
+    - Built [`13_SampleData.gs`](./WorkSheet/13_SampleData.gs) to seed realistic dummy data across Month and Todo sheets with 1 click.
+    - Month sheet seeded with 21 engineering tasks spanning all projects, categories, priorities, and statuses (`Completed`, `In Progress`, `Blocked`, `Pending`).
+    - Todo sheet seeded with 12 prioritized tasks mapped to Eisenhower Matrix quadrants (Q1: 3, Q2: 4, Q3: 3, Q4: 2) with strict mutual exclusivity.
+    - Added `Setup -> Populate Dummy Data` menu action in `07_Menu.gs`.
+    - Solved Todo Backlog horizontal cramping on Dashboard: increased column widths (Col A: 280px, Col B: 130px, Col C: 105px, Cols D–F: 120px) preventing any header overlapping or truncation.
+    - Aligned Todo Backlog banner and table cleanly to 6 columns (A–F) with subtle borders and left-aligned task/project headers.
+14. **Clean Canvas UI (Hidden Gridlines & Formula Bar Architecture)**:
+    - Automatically hides gridlines across Dashboard, Todo, and Month sheets via `sheet.setHideGridlines(true)`.
+    - Added subtle `#e2e8f0` row borders to Monthly Breakdown, Project Performance, and Todo Backlog so data is structured and readable on a seamless canvas.
+    - Added `View -> Hide Gridlines (All Sheets)` and `View -> Show Gridlines (All Sheets)` toolbar menu actions in `07_Menu.gs` and `10_Utils.gs`.
+    - Documented Google Sheets browser UI architecture for the formula bar: formula bar visibility is a user-level browser setting (toggled via `View -> Show -> Formula bar` or `Ctrl + Shift + F` for Full Screen mode) which Google Apps Script cannot access via API.
 
 ---
 
