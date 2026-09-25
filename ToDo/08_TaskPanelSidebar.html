@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #6b7280;
+      --faint: #9ca3af;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --divider: #f3f4f6;
+      --surface: #f9fafb;
+      --accent: #6366f1;
+      --ring: rgba(99, 102, 241, 0.18);
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      display: flex;
+      flex-direction: column;
+      font: 13px/1.45 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      color: var(--ink);
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+
+    /* ---------- Top bar ---------- */
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--divider);
+    }
+    .row-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .save-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      border: 0;
+      background: none;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--faint);
+      cursor: default;
+    }
+    .save-state::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .save-state[data-state="idle"] { visibility: hidden; }
+    .save-state[data-state="saving"] { color: var(--warning); }
+    .save-state[data-state="saved"] { color: var(--success); }
+    .save-state[data-state="error"] { color: var(--danger); cursor: pointer; }
+
+    /* ---------- Task view ---------- */
+    .view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    main { flex: 1; overflow-y: auto; padding: 14px 16px 20px; }
+
+    .quadrant {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .quadrant i { width: 6px; height: 6px; border-radius: 50%; }
+
+    .title {
+      display: block;
+      width: calc(100% + 16px);
+      margin: 10px -8px 0;
+      padding: 6px 8px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.35;
+      resize: none;
+      overflow: hidden;
+    }
+    .title::placeholder { color: var(--faint); font-weight: 500; }
+    .title:hover { background: var(--surface); }
+    .title:focus { outline: none; background: #fff; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+    .title.done { color: var(--faint); text-decoration: line-through; }
+
+    .field { margin-top: 20px; }
+    .label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .label small { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--faint); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-weight: 500;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .toggle:hover { border-color: var(--border-strong); }
+    .toggle .box {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 4px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .toggle .box svg { opacity: 0; }
+    .toggle[aria-pressed="true"] { border-color: var(--ink); background: var(--surface); }
+    .toggle[aria-pressed="true"] .box { background: var(--ink); border-color: var(--ink); }
+    .toggle[aria-pressed="true"] .box svg { opacity: 1; }
+
+    .status {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .status:hover { border-color: var(--border-strong); color: var(--ink); }
+    .status[aria-pressed="true"] { background: var(--s-bg); color: var(--s-fg); border-color: currentColor; }
+
+    .input {
+      display: block;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+    .input:hover { border-color: var(--border-strong); }
+    .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+    .notes { min-height: 110px; resize: vertical; line-height: 1.5; }
+
+    .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .pill {
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .pill:hover { border-color: var(--border-strong); color: var(--ink); }
+    .hint { min-height: 18px; margin-top: 8px; font-size: 12px; font-weight: 500; color: var(--muted); }
+    .hint.overdue { color: var(--danger); }
+    .hint.today { color: var(--warning); }
+
+    footer {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--divider);
+      background: #fff;
+    }
+    .btn {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-weight: 600;
+    }
+    .btn:hover { border-color: var(--border-strong); background: var(--surface); }
+    .btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .btn.primary:hover { background: #1f2937; }
+
+    /* ---------- Empty state ---------- */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty .icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--accent);
+    }
+    .empty h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
+    .empty p { max-width: 220px; margin: 0 0 16px; font-size: 12px; }
+    .empty .btn { flex: none; min-width: 140px; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <span class="row-tag" id="row-tag">Task details</span>
+    <button type="button" class="save-state" id="save-state" data-state="idle"></button>
+  </div>
+
+  <!-- Selected task -->
+  <div class="view" id="task-view" hidden>
+    <main>
+      <span class="quadrant" id="quadrant"><i></i><span></span></span>
+      <textarea class="title" id="title" rows="1" placeholder="Task name" spellcheck="true"></textarea>
+
+      <div class="field">
+        <div class="label">Priority</div>
+        <div class="grid-2">
+          <button type="button" class="toggle" data-flag="important" aria-pressed="false">
+            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
+            Important
+          </button>
+          <button type="button" class="toggle" data-flag="urgent" aria-pressed="false">
+            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
+            Urgent
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Status</div>
+        <div class="grid-2" id="statuses"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="due">Due date</label>
+        <input class="input" type="date" id="due">
+        <div class="quick">
+          <button type="button" class="pill" data-days="0">Today</button>
+          <button type="button" class="pill" data-days="1">Tomorrow</button>
+          <button type="button" class="pill" data-days="7">Next week</button>
+          <button type="button" class="pill" data-days="">Clear</button>
+        </div>
+        <div class="hint" id="due-hint"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="notes">Notes <small>Ctrl + Enter saves</small></label>
+        <textarea class="input notes" id="notes" placeholder="Add details, links, context…"></textarea>
+      </div>
+    </main>
+
+    <footer>
+      <button type="button" class="btn primary" id="done-btn">Mark done</button>
+      <button type="button" class="btn" id="new-btn">+ New task</button>
+    </footer>
+  </div>
+
+  <!-- Nothing selected -->
+  <div class="empty" id="empty-view">
+    <div class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+    </div>
+    <h2 id="empty-title">Loading…</h2>
+    <p id="empty-text"></p>
+    <button type="button" class="btn primary" id="empty-btn" hidden></button>
+  </div>
+
+  <script>
+    const BOOT = <?!= bootstrap ?>;
+    const $ = id => document.getElementById(id);
+    const els = {
+      title: $('title'),
+      notes: $('notes'),
+      due: $('due'),
+      saveState: $('save-state'),
+      toggles: Array.from(document.querySelectorAll('.toggle')),
+    };
+
+    const state = {
+      data: null,    // task as shown, including local edits not yet saved
+      patch: {},     // changed fields waiting to be sent
+      timer: null,
+      inFlight: 0,
+      editSeq: 0,    // bumps on every local edit
+      epoch: 0,      // bumps when the sidebar itself changes the selection
+      pollTimer: null,
+    };
+
+    // ---------------------------------------------------------
+    // Build status buttons from config
+    // ---------------------------------------------------------
+    const statusButtons = Object.keys(BOOT.statuses).map(name => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'status';
+      b.textContent = name;
+      b.setAttribute('aria-pressed', 'false');
+      b.style.setProperty('--s-bg', BOOT.statuses[name].bg);
+      b.style.setProperty('--s-fg', BOOT.statuses[name].fg);
+      b.addEventListener('click', () => edit('status', name, 0));
+      $('statuses').appendChild(b);
+      return b;
+    });
+
+    // ---------------------------------------------------------
+    // Rendering
+    // ---------------------------------------------------------
+    function showTask() {
+      $('task-view').hidden = false;
+      $('empty-view').hidden = true;
+    }
+
+    function showEmpty(reason) {
+      $('task-view').hidden = true;
+      $('empty-view').hidden = false;
+      $('row-tag').textContent = 'Task details';
+      setSaveState('idle');
+
+      const views = {
+        loading: ['Loading…', '', null],
+        sheet: ['Open the TODO sheet', 'Select any task row there to see and edit its details here.', ['Go to TODO', goToTodo]],
+        header: ['Select a task', 'Click any task row on the TODO sheet to view and edit it here.', ['+ New task', newTask]],
+      };
+      const [title, text, action] = views[reason] || views.header;
+      $('empty-title').textContent = title;
+      $('empty-text').textContent = text;
+      const btn = $('empty-btn');
+      btn.hidden = !action;
+      if (action) {
+        btn.textContent = action[0];
+        btn.onclick = action[1];
+      }
+    }
+
+    /** Writes state.data into the form; keepFocused skips the field being typed in. */
+    function render(keepFocused) {
+      const d = state.data;
+      const active = keepFocused ? document.activeElement : null;
+      if (active !== els.title) {
+        els.title.value = d.task;
+        autosize();
+      }
+      if (active !== els.notes) els.notes.value = d.notes;
+      if (active !== els.due) els.due.value = d.due;
+      renderDerived();
+    }
+
+    /** Everything that depends on the current values but isn't a text field. */
+    function renderDerived() {
+      const d = state.data;
+      $('row-tag').textContent = 'Row ' + d.row;
+
+      els.toggles.forEach(t => t.setAttribute('aria-pressed', String(d[t.dataset.flag])));
+      statusButtons.forEach(b => b.setAttribute('aria-pressed', String(b.textContent === d.status)));
+
+      const q = BOOT.quadrants.find(x => x.important === d.important && x.urgent === d.urgent);
+      const chip = $('quadrant');
+      chip.style.background = q.bg;
+      chip.style.color = q.text;
+      chip.querySelector('i').style.background = q.accent;
+      chip.querySelector('span').textContent = `${q.id} · ${q.title}`;
+
+      const isDone = d.status === 'Done';
+      els.title.classList.toggle('done', isDone);
+      $('done-btn').textContent = isDone ? 'Reopen' : 'Mark done';
+
+      const [tone, text] = dueHint(d);
+      const hint = $('due-hint');
+      hint.className = 'hint' + (tone ? ' ' + tone : '');
+      hint.textContent = text;
+    }
+
+    function dueHint(d) {
+      if (!d.due) return ['', 'No due date'];
+      if (d.status === 'Done') return ['', 'Completed'];
+      const days = Math.round((Date.parse(d.due) - Date.parse(isoDate(0))) / 864e5);
+      if (days < 0) return ['overdue', `Overdue by ${-days} ${days === -1 ? 'day' : 'days'}`];
+      if (days === 0) return ['today', 'Due today'];
+      if (days === 1) return ['', 'Due tomorrow'];
+      return ['', `Due in ${days} days`];
+    }
+
+    function setSaveState(kind) {
+      const labels = { idle: '', pending: 'Unsaved', saving: 'Saving…', saved: 'Saved', error: 'Couldn’t save · Retry' };
+      els.saveState.dataset.state = kind;
+      els.saveState.textContent = labels[kind];
+    }
+
+    function autosize() {
+      els.title.style.height = 'auto';
+      els.title.style.height = els.title.scrollHeight + 'px';
+    }
+
+    function isoDate(offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    // ---------------------------------------------------------
+    // Editing & saving
+    // ---------------------------------------------------------
+    function edit(key, value, delay) {
+      if (!state.data) return;
+      state.data[key] = value;
+      state.patch[key] = value;
+      state.editSeq++;
+      renderDerived();
+      setSaveState('pending');
+      clearTimeout(state.timer);
+      state.timer = setTimeout(flush, delay);
+    }
+
+    const hasPending = () => Object.keys(state.patch).length > 0;
+
+    function flush() {
+      clearTimeout(state.timer);
+      if (!state.data || !hasPending()) return;
+      const row = state.data.row;
+      const patch = state.patch;
+      state.patch = {};
+      state.inFlight++;
+      setSaveState('saving');
+
+      google.script.run
+        .withSuccessHandler(fresh => {
+          state.inFlight--;
+          const sameRow = state.data && state.data.row === fresh.row;
+          if (sameRow && !hasPending() && !state.inFlight) {
+            state.data = fresh;
+            render(true);
+          }
+          if (!hasPending() && !state.inFlight) setSaveState('saved');
+        })
+        .withFailureHandler(() => {
+          state.inFlight--;
+          // Keep the unsent changes so Retry (or the next edit) sends them again
+          if (state.data && state.data.row === row) state.patch = Object.assign(patch, state.patch);
+          setSaveState('error');
+        })
+        .saveTask(row, patch);
+    }
+
+    els.title.addEventListener('input', () => {
+      const clean = els.title.value.replace(/\n/g, ' ');
+      if (clean !== els.title.value) els.title.value = clean;
+      autosize();
+      edit('task', clean, 700);
+    });
+    els.title.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        els.notes.focus();
+      }
+    });
+    els.notes.addEventListener('input', () => edit('notes', els.notes.value, 700));
+    els.due.addEventListener('change', () => edit('due', els.due.value, 0));
+    [els.title, els.notes].forEach(el => el.addEventListener('blur', flush));
+
+    els.toggles.forEach(t => t.addEventListener('click', () => {
+      edit(t.dataset.flag, !state.data[t.dataset.flag], 0);
+    }));
+
+    document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => {
+      const value = p.dataset.days === '' ? '' : isoDate(Number(p.dataset.days));
+      els.due.value = value;
+      edit('due', value, 0);
+    }));
+
+    $('done-btn').addEventListener('click', () => {
+      edit('status', state.data.status === 'Done' ? BOOT.defaultStatus : 'Done', 0);
+    });
+    $('new-btn').addEventListener('click', newTask);
+    els.saveState.addEventListener('click', () => {
+      if (els.saveState.dataset.state === 'error') flush();
+    });
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        flush();
+      }
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) flush();
+    });
+
+    function newTask() {
+      flush();
+      state.epoch++;
+      setSaveState('saving');
+      google.script.run
+        .withSuccessHandler(data => {
+          state.epoch++;
+          state.data = data;
+          showTask();
+          render(false);
+          setSaveState('idle');
+          els.title.focus();
+        })
+        .withFailureHandler(() => {
+          state.epoch++;
+          setSaveState('error');
+        })
+        .createTask();
+    }
+
+    function goToTodo() {
+      state.epoch++;
+      google.script.run.withSuccessHandler(() => state.epoch++).openTodoSheet();
+    }
+
+    // ---------------------------------------------------------
+    // Selection polling
+    // ---------------------------------------------------------
+    function poll() {
+      const seq = state.editSeq;
+      const epoch = state.epoch;
+      google.script.run
+        .withSuccessHandler(res => {
+          if (epoch === state.epoch) onSelection(res, seq);
+          schedulePoll(BOOT.pollMs);
+        })
+        .withFailureHandler(() => schedulePoll(BOOT.pollMs * 4))
+        .getSelectedTask();
+    }
+
+    function schedulePoll(ms) {
+      clearTimeout(state.pollTimer);
+      state.pollTimer = setTimeout(poll, ms);
+    }
+
+    function onSelection(res, seq) {
+      if (!res || !res.row) {
+        flush();
+        state.data = null;
+        showEmpty(res ? res.reason : 'sheet');
+        return;
+      }
+
+      if (!state.data || res.row !== state.data.row) {
+        flush(); // save the previous row before switching
+        state.data = res;
+        showTask();
+        render(false);
+        if (!state.inFlight) setSaveState('idle');
+        return;
+      }
+
+      // Same row: pick up edits made directly in the sheet, unless the user is mid-edit here
+      const busy = seq !== state.editSeq || hasPending() || state.inFlight > 0;
+      if (!busy && JSON.stringify(res) !== JSON.stringify(state.data)) {
+        state.data = res;
+        render(true);
+      }
+    }
+
+    showEmpty('loading');
+    poll();
+  </script>
+</body>
+</html>

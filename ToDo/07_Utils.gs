@@ -42,6 +42,15 @@ function fitSheet_(sheet, rows, cols) {
   else if (maxCols < cols) sheet.insertColumnsAfter(maxCols, cols - maxCols);
 }
 
+/** Last row holding real content; unchecked checkboxes (FALSE) don't count. */
+function lastContentRow_(sheet) {
+  const values = sheet.getDataRange().getValues();
+  for (let r = values.length - 1; r >= 1; r--) {
+    if (values[r].some(v => v !== '' && v !== false)) return r + 1;
+  }
+  return 1;
+}
+
 /** Deletes the given 1-based rows (ascending), bottom-up in contiguous blocks. */
 function deleteRows_(sheet, rows) {
   let end = rows.length - 1;

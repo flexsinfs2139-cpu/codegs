@@ -13,11 +13,23 @@
  *   05_Archive    archiving completed tasks
  *   06_Formulas   formula and conditional-format builders
  *   07_Utils      generic sheet helpers
+ *   08_TaskPanel  task details sidebar (+ 08_TaskPanelSidebar.html)
  */
 
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Eisenhower')
+  let ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (err) {
+    // Run from the editor, a trigger, or a standalone project: there is no sheet UI to attach to
+    console.warn('No spreadsheet UI here. Open the spreadsheet (Extensions → Apps Script must own this ' +
+                 'project) and reload the tab to get the Eisenhower menu.');
+    return;
+  }
+
+  ui.createMenu('Eisenhower')
+    .addItem('Task details panel', 'showTaskPanel')
+    .addSeparator()
     .addItem('Rebuild workspace', 'setupEisenhowerMatrix')
     .addItem('Archive completed tasks', 'archiveCompletedTasks')
     .addToUi();

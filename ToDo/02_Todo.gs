@@ -13,7 +13,7 @@ function setupTodoSheet_(sheet, seed) {
   migrateTodoColumns_(sheet);
 
   const width = COLUMNS.length;
-  const rows = Math.max(CONFIG.todoRows, sheet.getLastRow());
+  const rows = Math.max(CONFIG.todoRows, lastContentRow_(sheet) + CONFIG.spareRows);
   const body = rows - 1;
   fitSheet_(sheet, rows, Math.max(width, sheet.getLastColumn()));
   sheet.setHiddenGridlines(true);

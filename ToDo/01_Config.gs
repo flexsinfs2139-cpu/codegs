@@ -7,7 +7,9 @@
 const CONFIG = {
   sheets: { todo: 'TODO', matrix: 'Eisenhower Matrix', dashboard: 'Dashboard', archive: 'Archive' },
   todoRows: 200,            // minimum rows on the TODO sheet (incl. header)
+  spareRows: 50,            // empty rows kept below the last task on rebuild
   slots: 12,                // visible task rows per quadrant
+  panelPollMs: 1000,        // how often the task sidebar checks the selected row
   includeSampleTasks: true, // seed sample tasks when the TODO sheet is first created
   defaultStatus: 'To Do',   // filled in automatically when a new task is typed
   dateFormat: 'mmm d, yyyy',
