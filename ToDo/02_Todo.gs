@@ -1,127 +1,78 @@
 /**
- * TODO sheet: the single source of truth for tasks.
- * The Matrix and Dashboard only read from it.
+ * TODO sheet: the task table (A:D) and four live quadrant columns (F:I).
+ * The task table is the single source of truth; the quadrant columns only read from it.
  */
 
 /** Resets formatting (keeping content) and re-applies the TODO layout. */
 function rebuildTodoSheet_(sheet, seed) {
+  migrateColumns_(sheet, COLUMNS.map(c => c.header)); // before the reset, while dates still show as dates
   resetSheet_(sheet, true);
   setupTodoSheet_(sheet, seed);
 }
 
 function setupTodoSheet_(sheet, seed) {
-  migrateTodoColumns_(sheet);
-
   const width = COLUMNS.length;
-  const rows = Math.max(CONFIG.todoRows, lastContentRow_(sheet) + CONFIG.spareRows);
+  const rows = Math.max(CONFIG.todoRows, lastContentRow_(sheet, width) + CONFIG.spareRows);
   const body = rows - 1;
-  fitSheet_(sheet, rows, Math.max(width, sheet.getLastColumn()));
+  fitSheet_(sheet, rows, TODO_LAST_COL);
   sheet.setHiddenGridlines(true);
 
-  sheet.getRange(1, 1, rows, width)
+  sheet.getRange(1, 1, rows, TODO_LAST_COL)
     .setFontFamily(CONFIG.font)
     .setFontSize(10)
-    .setFontColor(THEME.ink)
     .setVerticalAlignment('middle');
 
-  // Header
-  sheet.getRange(1, 1, 1, width)
-    .setValues([COLUMNS.map(c => c.header)])
-    .setFontWeight('bold')
-    .setFontColor('#ffffff')
-    .setBackground(THEME.ink);
-  ['important', 'urgent', 'status', 'due'].forEach(key =>
-    sheet.getRange(1, COL[key]).setHorizontalAlignment('center')
-  );
+  // Sizes
+  sheet.setRowHeight(1, CONFIG.headerHeight);
+  sheet.setRowHeights(2, body, CONFIG.rowHeight);
+  COLUMNS.forEach((c, i) => sheet.setColumnWidth(i + 1, c.width));
+  sheet.setColumnWidth(MATRIX_COL - 1, CONFIG.gapWidth);
+  sheet.setColumnWidths(MATRIX_COL, QUADRANTS.length, CONFIG.quadrantWidth);
   sheet.setFrozenRows(1);
 
-  // Sizes
-  sheet.setRowHeight(1, 40);
-  sheet.setRowHeights(2, body, 32);
-  COLUMNS.forEach((c, i) => sheet.setColumnWidth(i + 1, c.width));
+  // Task table
+  styleTable_(sheet.getRange(1, 1, rows, width), COLUMNS.map(c => c.header));
+  sheet.getRange(2, COL.task, body, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
 
   // Sample tasks (brand-new sheet only)
   if (seed && SAMPLE_TASKS.length) {
-    sheet.getRange(2, 1, SAMPLE_TASKS.length, width).setValues(sampleRows_(sheet));
+    const sample = SAMPLE_TASKS.map(t => COLUMNS.map(c => t[c.key]));
+    sheet.getRange(2, 1, sample.length, width).setValues(sample);
   }
 
   // Capture existing data: insertCheckboxes() resets every cell to FALSE
   const data = sheet.getRange(2, 1, body, width).getValues();
-
-  // Checkboxes for Important / Urgent, restored to their previous state
-  sheet.getRange(2, COL.important, body, 2)
-    .insertCheckboxes()
-    .setValues(data.map(r => [r[COL.important - 1] === true, r[COL.urgent - 1] === true]))
-    .setHorizontalAlignment('center');
+  insertCheckboxes_(sheet.getRange(2, COL.important, body, 2));
 
   // Status dropdown; tasks without a status get the default
-  const statusRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(Object.keys(STATUSES), true)
-    .setAllowInvalid(false)
-    .build();
   const statusRange = sheet.getRange(2, COL.status, body, 1)
-    .setDataValidation(statusRule)
-    .setHorizontalAlignment('center')
-    .setFontSize(9)
-    .setFontWeight('bold');
+    .setDataValidation(statusValidation_())
+    .setHorizontalAlignment('center');
   const statuses = data.map(r => [r[COL.status - 1]]);
   if (fillDefaultStatus_(data.map(r => [r[COL.task - 1]]), statuses)) statusRange.setValues(statuses);
 
-  // Due date (double-click opens the date picker)
-  const dateRule = SpreadsheetApp.newDataValidation()
-    .requireDate()
-    .setAllowInvalid(false)
-    .setHelpText('Enter a date, or double-click to pick one.')
-    .build();
-  sheet.getRange(2, COL.due, body, 1)
-    .setDataValidation(dateRule)
-    .setNumberFormat(CONFIG.dateFormat)
-    .setHorizontalAlignment('center');
-
-  // Long text stays on one clean line
-  sheet.getRange(2, COL.task, body, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
-  sheet.getRange(2, COL.notes, body, 1)
-    .setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP)
-    .setFontColor(THEME.muted);
-
-  // Zebra rows
-  sheet.getRange(2, 1, body, width)
-    .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, false, false)
-    .setFirstRowColor('#ffffff')
-    .setSecondRowColor(THEME.surface);
+  // Quadrant columns: one live list of open tasks per quadrant
+  styleTable_(sheet.getRange(1, MATRIX_COL, rows, QUADRANTS.length), QUADRANTS.map(q => q.title));
+  sheet.getRange(2, MATRIX_COL, body, QUADRANTS.length).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  sheet.getRange(2, MATRIX_COL, 1, QUADRANTS.length)
+    .setFormulas([QUADRANTS.map(quadrantListFormula_)]);
+  sheet.getRange(1, MATRIX_COL, rows, QUADRANTS.length).protect()
+    .setDescription('Auto-generated. Edit tasks in the Tasks columns.')
+    .setWarningOnly(true);
 
   sheet.setConditionalFormatRules(todoFormatRules_(sheet, body));
-
-  sheet.getRange(1, 1, rows, width).createFilter();
 }
 
-/** Done rows muted, overdue / due-today dates highlighted, status chips. */
+/** Done tasks muted and struck through, status chips. */
 function todoFormatRules_(sheet, body) {
-  const ref = key => `$${columnLetter_(COL[key])}2`;
-  const column = key => sheet.getRange(2, COL[key], body, 1);
-
   const doneRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(`=${ref('status')}="Done"`)
+    .whenFormulaSatisfied(`=$${columnLetter_(COL.status)}2="Done"`)
     .setFontColor(THEME.faint)
     .setStrikethrough(true)
-    .setRanges([column('task'), column('due'), column('notes')])
+    .setRanges([sheet.getRange(2, COL.task, body, 1)])
     .build();
 
-  const overdueRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(`=AND(${ref('due')}<>"",${ref('due')}<TODAY(),${ref('status')}<>"Done")`)
-    .setFontColor(THEME.danger)
-    .setBold(true)
-    .setRanges([column('due')])
-    .build();
-
-  const dueTodayRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied(`=AND(${ref('due')}=TODAY(),${ref('status')}<>"Done")`)
-    .setFontColor(THEME.warning)
-    .setBold(true)
-    .setRanges([column('due')])
-    .build();
-
-  return [doneRule, overdueRule, dueTodayRule].concat(statusRules_([column('status')]));
+  return [doneRule].concat(statusRules_([sheet.getRange(2, COL.status, body, 1)]));
 }
 
 /** onEdit handler: newly typed (or pasted) tasks get the default status. */
@@ -139,16 +90,6 @@ function handleTodoEdit_(range) {
   if (fillDefaultStatus_(tasks, statuses)) statusRange.setValues(statuses);
 }
 
-/** Upgrades a TODO sheet from the original 5-column layout by inserting the Due column. */
-function migrateTodoColumns_(sheet) {
-  const lastCol = sheet.getLastColumn();
-  if (lastCol === 0) return;
-  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-  if (headers.indexOf('Due') === -1 && headers[COL.due - 1] === 'Notes') {
-    sheet.insertColumnBefore(COL.due);
-  }
-}
-
 /** Sets the default status on rows that have a task but no status. Returns true if any changed. */
 function fillDefaultStatus_(tasks, statuses) {
   let changed = false;
@@ -161,14 +102,9 @@ function fillDefaultStatus_(tasks, statuses) {
   return changed;
 }
 
-/** SAMPLE_TASKS with due offsets turned into dates in the spreadsheet's time zone. */
-function sampleRows_(sheet) {
-  const tz = sheet.getParent().getSpreadsheetTimeZone();
-  const now = Date.now();
-  return SAMPLE_TASKS.map(([task, important, urgent, status, dueInDays, notes]) => {
-    const due = dueInDays === ''
-      ? ''
-      : Utilities.formatDate(new Date(now + dueInDays * 86400000), tz, 'yyyy-MM-dd');
-    return [task, important, urgent, status, due, notes];
-  });
+function statusValidation_() {
+  return SpreadsheetApp.newDataValidation()
+    .requireValueInList(Object.keys(STATUSES), true)
+    .setAllowInvalid(false)
+    .build();
 }

@@ -16,13 +16,27 @@ function showTaskPanel() {
   SpreadsheetApp.getUi().showSidebar(template.evaluate().setTitle('Task details'));
 }
 
-/** Sidebar: the task on the user's current row, or the reason there is none. */
-function getSelectedTask() {
+/**
+ * Sidebar: the task on the user's current row, or the reason there is none.
+ * `current` is the task the sidebar shows ({ row, cell }), so a task picked from a
+ * quadrant column stays selected even after an edit moves it to another quadrant.
+ */
+function getSelectedTask(current) {
   const sheet = SpreadsheetApp.getActiveSheet();
   if (sheet.getName() !== CONFIG.sheets.todo) return { row: null, reason: 'sheet' };
   const range = sheet.getActiveRange();
-  const row = range ? range.getRow() : 1;
+  let row = range ? range.getRow() : 1;
   if (row < 2) return { row: null, reason: 'header' };
+
+  // A task picked in a quadrant column opens that task's own row
+  if (range.getColumn() >= MATRIX_COL) {
+    const cell = range.getCell(1, 1).getA1Notation();
+    row = current && current.cell === cell
+      ? Number(current.row)
+      : findTaskRow_(sheet, range.getCell(1, 1).getDisplayValue());
+    if (!row) return { row: null, reason: 'header' };
+    return Object.assign(readTask_(sheet, row), { cell });
+  }
   return readTask_(sheet, row);
 }
 
@@ -35,11 +49,9 @@ function saveTask(row, patch) {
 
   // Plain-text format stops entries like "1/2 day" or "=x" being re-parsed
   if ('task' in patch) cell('task').setNumberFormat('@').setValue(String(patch.task).trim());
-  if ('notes' in patch) cell('notes').setNumberFormat('@').setValue(String(patch.notes));
   if ('important' in patch) cell('important').setValue(patch.important === true);
   if ('urgent' in patch) cell('urgent').setValue(patch.urgent === true);
   if ('status' in patch) cell('status').setValue(STATUSES[patch.status] ? patch.status : '');
-  if ('due' in patch) cell('due').setValue(/^\d{4}-\d{2}-\d{2}$/.test(patch.due) ? patch.due : '');
 
   if (cell('task').getValue() !== '' && cell('status').getValue() === '') {
     cell('status').setValue(CONFIG.defaultStatus);
@@ -70,18 +82,21 @@ function readTask_(sheet, row) {
   const values = range.getValues()[0];
   const display = range.getDisplayValues()[0];
   const at = key => COL[key] - 1;
-  const due = values[at('due')];
   return {
     row,
     task: display[at('task')],
     important: values[at('important')] === true,
     urgent: values[at('urgent')] === true,
     status: display[at('status')],
-    due: due instanceof Date
-      ? Utilities.formatDate(due, sheet.getParent().getSpreadsheetTimeZone(), 'yyyy-MM-dd')
-      : '',
-    notes: display[at('notes')],
   };
+}
+
+/** Row of the first open task with this name (quadrant columns list open tasks only). */
+function findTaskRow_(sheet, name) {
+  if (!name) return null;
+  const values = sheet.getRange(2, 1, sheet.getMaxRows() - 1, COLUMNS.length).getDisplayValues();
+  const index = values.findIndex(r => r[COL.task - 1] === name && r[COL.status - 1] !== 'Done');
+  return index === -1 ? null : index + 2;
 }
 
 function firstEmptyRow_(sheet) {

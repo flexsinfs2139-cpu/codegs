@@ -32,7 +32,7 @@
       background: #fff;
       -webkit-font-smoothing: antialiased;
     }
-    button, input, textarea { font: inherit; color: inherit; }
+    button, textarea { font: inherit; color: inherit; }
     button { cursor: pointer; }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     [hidden] { display: none !important; }
@@ -123,7 +123,6 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-    .label small { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--faint); }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
     .toggle {
@@ -166,33 +165,6 @@
     }
     .status:hover { border-color: var(--border-strong); color: var(--ink); }
     .status[aria-pressed="true"] { background: var(--s-bg); color: var(--s-fg); border-color: currentColor; }
-
-    .input {
-      display: block;
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #fff;
-    }
-    .input:hover { border-color: var(--border-strong); }
-    .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
-    .notes { min-height: 110px; resize: vertical; line-height: 1.5; }
-
-    .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .pill {
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #fff;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--muted);
-    }
-    .pill:hover { border-color: var(--border-strong); color: var(--ink); }
-    .hint { min-height: 18px; margin-top: 8px; font-size: 12px; font-weight: 500; color: var(--muted); }
-    .hint.overdue { color: var(--danger); }
-    .hint.today { color: var(--warning); }
 
     footer {
       display: flex;
@@ -270,23 +242,6 @@
         <div class="label">Status</div>
         <div class="grid-2" id="statuses"></div>
       </div>
-
-      <div class="field">
-        <label class="label" for="due">Due date</label>
-        <input class="input" type="date" id="due">
-        <div class="quick">
-          <button type="button" class="pill" data-days="0">Today</button>
-          <button type="button" class="pill" data-days="1">Tomorrow</button>
-          <button type="button" class="pill" data-days="7">Next week</button>
-          <button type="button" class="pill" data-days="">Clear</button>
-        </div>
-        <div class="hint" id="due-hint"></div>
-      </div>
-
-      <div class="field">
-        <label class="label" for="notes">Notes <small>Ctrl + Enter saves</small></label>
-        <textarea class="input notes" id="notes" placeholder="Add details, links, context…"></textarea>
-      </div>
     </main>
 
     <footer>
@@ -310,8 +265,6 @@
     const $ = id => document.getElementById(id);
     const els = {
       title: $('title'),
-      notes: $('notes'),
-      due: $('due'),
       saveState: $('save-state'),
       toggles: Array.from(document.querySelectorAll('.toggle')),
     };
@@ -358,8 +311,8 @@
 
       const views = {
         loading: ['Loading…', '', null],
-        sheet: ['Open the TODO sheet', 'Select any task row there to see and edit its details here.', ['Go to TODO', goToTodo]],
-        header: ['Select a task', 'Click any task row on the TODO sheet to view and edit it here.', ['+ New task', newTask]],
+        sheet: ['Open the TODO sheet', 'Select any task there to see and edit its details here.', ['Go to TODO', goToTodo]],
+        header: ['Select a task', 'Click a task, or a task in Do Now / Schedule / Delegate / Delete, to edit it here.', ['+ New task', newTask]],
       };
       const [title, text, action] = views[reason] || views.header;
       $('empty-title').textContent = title;
@@ -380,8 +333,6 @@
         els.title.value = d.task;
         autosize();
       }
-      if (active !== els.notes) els.notes.value = d.notes;
-      if (active !== els.due) els.due.value = d.due;
       renderDerived();
     }
 
@@ -403,21 +354,6 @@
       const isDone = d.status === 'Done';
       els.title.classList.toggle('done', isDone);
       $('done-btn').textContent = isDone ? 'Reopen' : 'Mark done';
-
-      const [tone, text] = dueHint(d);
-      const hint = $('due-hint');
-      hint.className = 'hint' + (tone ? ' ' + tone : '');
-      hint.textContent = text;
-    }
-
-    function dueHint(d) {
-      if (!d.due) return ['', 'No due date'];
-      if (d.status === 'Done') return ['', 'Completed'];
-      const days = Math.round((Date.parse(d.due) - Date.parse(isoDate(0))) / 864e5);
-      if (days < 0) return ['overdue', `Overdue by ${-days} ${days === -1 ? 'day' : 'days'}`];
-      if (days === 0) return ['today', 'Due today'];
-      if (days === 1) return ['', 'Due tomorrow'];
-      return ['', `Due in ${days} days`];
     }
 
     function setSaveState(kind) {
@@ -429,13 +365,6 @@
     function autosize() {
       els.title.style.height = 'auto';
       els.title.style.height = els.title.scrollHeight + 'px';
-    }
-
-    function isoDate(offsetDays) {
-      const d = new Date();
-      d.setDate(d.getDate() + offsetDays);
-      const pad = n => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
 
     // ---------------------------------------------------------
@@ -468,7 +397,7 @@
           state.inFlight--;
           const sameRow = state.data && state.data.row === fresh.row;
           if (sameRow && !hasPending() && !state.inFlight) {
-            state.data = fresh;
+            state.data = Object.assign(fresh, { cell: state.data.cell });
             render(true);
           }
           if (!hasPending() && !state.inFlight) setSaveState('saved');
@@ -489,23 +418,15 @@
       edit('task', clean, 700);
     });
     els.title.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+      if (e.key === 'Enter') {
         e.preventDefault();
-        els.notes.focus();
+        els.title.blur(); // blur saves
       }
     });
-    els.notes.addEventListener('input', () => edit('notes', els.notes.value, 700));
-    els.due.addEventListener('change', () => edit('due', els.due.value, 0));
-    [els.title, els.notes].forEach(el => el.addEventListener('blur', flush));
+    els.title.addEventListener('blur', flush);
 
     els.toggles.forEach(t => t.addEventListener('click', () => {
       edit(t.dataset.flag, !state.data[t.dataset.flag], 0);
-    }));
-
-    document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => {
-      const value = p.dataset.days === '' ? '' : isoDate(Number(p.dataset.days));
-      els.due.value = value;
-      edit('due', value, 0);
     }));
 
     $('done-btn').addEventListener('click', () => {
@@ -563,7 +484,7 @@
           schedulePoll(BOOT.pollMs);
         })
         .withFailureHandler(() => schedulePoll(BOOT.pollMs * 4))
-        .getSelectedTask();
+        .getSelectedTask(state.data && { row: state.data.row, cell: state.data.cell });
     }
 
     function schedulePoll(ms) {
