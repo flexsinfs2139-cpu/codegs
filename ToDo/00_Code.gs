@@ -64,7 +64,7 @@ function setupEisenhowerMatrix() {
 
   removeLegacySheets_(ss);
   orderSheets_(ss, [todo, archive]);
-  todo.setTabColor(THEME.header);
+  todo.setTabColor(THEME.todoTab || THEME.header);
   removeBlankDefaultSheet_(ss);
   syncTaskPanelTrigger_(ss);
 

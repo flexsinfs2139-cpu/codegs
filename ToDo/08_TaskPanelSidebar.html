@@ -4,22 +4,37 @@
   <base target="_top">
   <meta charset="utf-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #111827;
-      --muted: #6b7280;
-      --faint: #9ca3af;
-      --border: #e5e7eb;
-      --border-strong: #d1d5db;
-      --divider: #f3f4f6;
-      --surface: #f9fafb;
-      --accent: #6366f1;
-      --ring: rgba(99, 102, 241, 0.18);
+      --brand: #4f46e5;
+      --brand-hover: #4338ca;
+      --brand-light: #eef2ff;
+      --brand-glow: rgba(79, 70, 229, 0.16);
+      --ink: #0f172a;
+      --ink-secondary: #334155;
+      --muted: #64748b;
+      --faint: #94a3af;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --surface: #ffffff;
+      --surface-subtle: #f8fafc;
+      --surface-hover: #f1f5f9;
       --danger: #dc2626;
+      --danger-bg: #fef2f2;
       --warning: #d97706;
+      --warning-bg: #fffbeb;
       --success: #16a34a;
-      --radius: 8px;
+      --success-bg: #f0fdf4;
+      --indigo: #6366f1;
+      --indigo-bg: #f5f3ff;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --radius-pill: 9999px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-tile-active: 0 0 0 2px var(--brand), 0 4px 12px var(--brand-glow);
     }
 
     * { box-sizing: border-box; }
@@ -27,43 +42,73 @@
     body {
       display: flex;
       flex-direction: column;
-      font: 13px/1.45 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font: 13px/1.45 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       color: var(--ink);
-      background: #fff;
+      background: var(--surface-subtle);
       -webkit-font-smoothing: antialiased;
     }
     button, textarea { font: inherit; color: inherit; }
-    button { cursor: pointer; }
-    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button { cursor: pointer; border: none; outline: none; }
+    button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
     [hidden] { display: none !important; }
 
-    /* ---------- Top bar ---------- */
+    /* ---------- Modern SaaS Top Navbar ---------- */
     .bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      min-height: 44px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--divider);
+      min-height: 48px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      z-index: 10;
     }
-    .row-tag {
+    .bar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--brand-light);
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .logo-badge svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+    .row-pill {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-hover);
       color: var(--muted);
+      border: 1px solid var(--border);
     }
     .save-state {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 0;
-      border: 0;
-      background: none;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--faint);
+      background: transparent;
+      transition: all 0.2s ease;
       cursor: default;
     }
     .save-state::before {
@@ -74,190 +119,473 @@
       background: currentColor;
     }
     .save-state[data-state="idle"] { visibility: hidden; }
-    .save-state[data-state="saving"] { color: var(--warning); }
-    .save-state[data-state="saved"] { color: var(--success); }
-    .save-state[data-state="error"] { color: var(--danger); cursor: pointer; }
+    .save-state[data-state="saving"] {
+      color: var(--warning);
+      background: var(--warning-bg);
+      animation: pulse-dot 1.5s infinite;
+    }
+    .save-state[data-state="saved"] {
+      color: var(--success);
+      background: var(--success-bg);
+    }
+    .save-state[data-state="error"] {
+      color: var(--danger);
+      background: var(--danger-bg);
+      cursor: pointer;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
 
-    /* ---------- Task view ---------- */
+    /* ---------- Main Task View ---------- */
     .view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    main { flex: 1; overflow-y: auto; padding: 14px 16px 20px; }
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    main::-webkit-scrollbar { width: 5px; }
+    main::-webkit-scrollbar-track { background: transparent; }
+    main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
 
-    .quadrant {
+    /* Task Title Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:focus-within {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-glow), var(--shadow-sm);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .quadrant-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 3px 10px;
-      border-radius: 999px;
+      padding: 3px 9px;
+      border-radius: var(--radius-pill);
       font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.02em;
     }
-    .quadrant i { width: 6px; height: 6px; border-radius: 50%; }
-
-    .title {
+    .quadrant-badge i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .title-input {
       display: block;
-      width: calc(100% + 16px);
-      margin: 10px -8px 0;
-      padding: 6px 8px;
-      border: 1px solid transparent;
-      border-radius: var(--radius);
+      width: 100%;
+      border: none;
       background: transparent;
-      font-size: 16px;
+      padding: 0;
+      font-size: 15px;
       font-weight: 600;
-      line-height: 1.35;
+      line-height: 1.4;
+      color: var(--ink);
       resize: none;
       overflow: hidden;
+      outline: none;
     }
-    .title::placeholder { color: var(--faint); font-weight: 500; }
-    .title:hover { background: var(--surface); }
-    .title:focus { outline: none; background: #fff; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
-    .title.done { color: var(--faint); text-decoration: line-through; }
+    .title-input::placeholder { color: var(--faint); font-weight: 500; }
+    .title-input.done { color: var(--faint); text-decoration: line-through; }
 
-    .field { margin-top: 20px; }
-    .label {
+    /* Field Headings */
+    .section-label {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
+      margin-bottom: 8px;
     }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .section-hint {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--brand);
+      text-transform: none;
+      letter-spacing: normal;
+    }
 
+    /* ---------- Interactive 2x2 Eisenhower Decision Matrix ---------- */
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .q-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      padding: 10px 10px 9px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      text-align: left;
+      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .q-tile:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .q-tile-top {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .q-tile-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .q-tile-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .q-tile-sub {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.2;
+    }
+    /* Active Tile States */
+    .q-tile[data-q="Q1"][aria-selected="true"] {
+      border-color: #dc2626;
+      background: #fef2f2;
+      box-shadow: 0 0 0 2px #dc2626, var(--shadow-sm);
+    }
+    .q-tile[data-q="Q1"][aria-selected="true"] .q-tile-title { color: #991b1b; }
+
+    .q-tile[data-q="Q2"][aria-selected="true"] {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 2px #16a34a, var(--shadow-sm);
+    }
+    .q-tile[data-q="Q2"][aria-selected="true"] .q-tile-title { color: #166534; }
+
+    .q-tile[data-q="Q3"][aria-selected="true"] {
+      border-color: #d97706;
+      background: #fffbeb;
+      box-shadow: 0 0 0 2px #d97706, var(--shadow-sm);
+    }
+    .q-tile[data-q="Q3"][aria-selected="true"] .q-tile-title { color: #92400e; }
+
+    .q-tile[data-q="Q4"][aria-selected="true"] {
+      border-color: #6366f1;
+      background: #f5f3ff;
+      box-shadow: 0 0 0 2px #6366f1, var(--shadow-sm);
+    }
+    .q-tile[data-q="Q4"][aria-selected="true"] .q-tile-title { color: #4338ca; }
+
+    /* ---------- Priority Fine-Tuning Switches ---------- */
+    .switches-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .toggle {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 9px 10px;
+      padding: 8px 10px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: #fff;
-      font-weight: 500;
-      text-align: left;
-      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+      transition: all 0.15s ease;
     }
     .toggle:hover { border-color: var(--border-strong); }
     .toggle .box {
       display: grid;
       place-items: center;
-      flex: none;
       width: 16px;
       height: 16px;
       border: 1.5px solid var(--border-strong);
       border-radius: 4px;
-      transition: background 0.15s, border-color 0.15s;
+      transition: all 0.15s ease;
     }
     .toggle .box svg { opacity: 0; }
-    .toggle[aria-pressed="true"] { border-color: var(--ink); background: var(--surface); }
-    .toggle[aria-pressed="true"] .box { background: var(--ink); border-color: var(--ink); }
     .toggle[aria-pressed="true"] .box svg { opacity: 1; }
 
-    .status {
+    .toggle[data-flag="important"][aria-pressed="true"] {
+      border-color: #f59e0b;
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .toggle[data-flag="important"][aria-pressed="true"] .box {
+      background: #d97706;
+      border-color: #d97706;
+    }
+
+    .toggle[data-flag="urgent"][aria-pressed="true"] {
+      border-color: #ef4444;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .toggle[data-flag="urgent"][aria-pressed="true"] .box {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
+    /* ---------- Status Pills Grid ---------- */
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .status-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       padding: 8px 10px;
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
-      background: #fff;
-      font-size: 12px;
+      background: var(--surface);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--muted);
+      transition: all 0.15s ease;
+    }
+    .status-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+    .status-btn[aria-pressed="true"] {
+      background: var(--s-bg);
+      color: var(--s-fg);
+      border-color: currentColor;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ---------- Keyboard Shortcut Footer Hint ---------- */
+    .shortcut-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 10.5px;
+      color: var(--faint);
+      margin-top: 4px;
+    }
+    kbd {
+      padding: 1.5px 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
       font-weight: 600;
       color: var(--muted);
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
-    .status:hover { border-color: var(--border-strong); color: var(--ink); }
-    .status[aria-pressed="true"] { background: var(--s-bg); color: var(--s-fg); border-color: currentColor; }
 
+    /* ---------- Floating Action Dock (Footer) ---------- */
     footer {
       display: flex;
       gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--divider);
-      background: #fff;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.03);
     }
     .btn {
       flex: 1;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
       border-radius: var(--radius);
-      background: #fff;
-      font-weight: 600;
+      font-size: 12.5px;
+      font-weight: 700;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .btn:hover { border-color: var(--border-strong); background: var(--surface); }
-    .btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
-    .btn.primary:hover { background: #1f2937; }
+    .btn-secondary {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      color: var(--ink-secondary);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
+      color: var(--ink);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+      box-shadow: 0 4px 8px rgba(79, 70, 229, 0.35);
+      transform: translateY(-0.5px);
+    }
+    .btn-primary:active { transform: translateY(0); }
 
-    /* ---------- Empty state ---------- */
+    /* ---------- Empty State ---------- */
     .empty {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px 24px;
+      padding: 32px 20px;
       text-align: center;
       color: var(--muted);
     }
-    .empty .icon {
+    .empty-icon {
       display: grid;
       place-items: center;
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       margin-bottom: 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
       background: var(--surface);
-      color: var(--accent);
+      color: var(--brand);
+      box-shadow: var(--shadow-sm);
     }
-    .empty h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
-    .empty p { max-width: 220px; margin: 0 0 16px; font-size: 12px; }
-    .empty .btn { flex: none; min-width: 140px; }
+    .empty h2 { margin: 0 0 6px; font-size: 15px; font-weight: 700; color: var(--ink); }
+    .empty p { max-width: 230px; margin: 0 0 18px; font-size: 12px; line-height: 1.45; }
+    .empty .btn { flex: none; min-width: 150px; }
   </style>
 </head>
 <body>
+  <!-- Top Navigation Bar -->
   <div class="bar">
-    <span class="row-tag" id="row-tag">Task details</span>
+    <div class="bar-left">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span>Eisenhower</span>
+      </div>
+      <span class="row-pill" id="row-tag">Row --</span>
+    </div>
     <button type="button" class="save-state" id="save-state" data-state="idle"></button>
   </div>
 
-  <!-- Selected task -->
+  <!-- Selected Task View -->
   <div class="view" id="task-view" hidden>
     <main>
-      <span class="quadrant" id="quadrant"><i></i><span></span></span>
-      <textarea class="title" id="title" rows="1" placeholder="Task name" spellcheck="true"></textarea>
+      <!-- Task Title Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="quadrant-badge" id="quadrant"><i></i><span></span></span>
+        </div>
+        <textarea class="title-input" id="title" rows="2" placeholder="What needs to be done?" spellcheck="true"></textarea>
+      </div>
 
-      <div class="field">
-        <div class="label">Priority</div>
-        <div class="grid-2">
-          <button type="button" class="toggle" data-flag="important" aria-pressed="false">
-            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
-            Important
+      <!-- 2x2 Interactive Eisenhower Decision Matrix -->
+      <div>
+        <div class="section-label">
+          <span>Eisenhower Quadrant</span>
+          <span class="section-hint" id="quadrant-hint">Do Now</span>
+        </div>
+        <div class="matrix-grid">
+          <button type="button" class="q-tile" data-q="Q1">
+            <div class="q-tile-top" style="color: #dc2626;">
+              <span class="q-tile-dot" style="background: #dc2626;"></span>
+              <span>Q1</span>
+            </div>
+            <div class="q-tile-title">Do Now</div>
+            <div class="q-tile-sub">Urgent & Important</div>
           </button>
-          <button type="button" class="toggle" data-flag="urgent" aria-pressed="false">
-            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
-            Urgent
+          <button type="button" class="q-tile" data-q="Q2">
+            <div class="q-tile-top" style="color: #16a34a;">
+              <span class="q-tile-dot" style="background: #16a34a;"></span>
+              <span>Q2</span>
+            </div>
+            <div class="q-tile-title">Schedule</div>
+            <div class="q-tile-sub">Important, Not Urgent</div>
+          </button>
+          <button type="button" class="q-tile" data-q="Q3">
+            <div class="q-tile-top" style="color: #d97706;">
+              <span class="q-tile-dot" style="background: #d97706;"></span>
+              <span>Q3</span>
+            </div>
+            <div class="q-tile-title">Delegate</div>
+            <div class="q-tile-sub">Urgent, Not Important</div>
+          </button>
+          <button type="button" class="q-tile" data-q="Q4">
+            <div class="q-tile-top" style="color: #6366f1;">
+              <span class="q-tile-dot" style="background: #6366f1;"></span>
+              <span>Q4</span>
+            </div>
+            <div class="q-tile-title">Delete</div>
+            <div class="q-tile-sub">Neither</div>
           </button>
         </div>
       </div>
 
-      <div class="field">
-        <div class="label">Status</div>
-        <div class="grid-2" id="statuses"></div>
+      <!-- Priority Granular Switches -->
+      <div>
+        <div class="section-label">
+          <span>Priority Toggles</span>
+        </div>
+        <div class="switches-grid">
+          <button type="button" class="toggle" data-flag="important" aria-pressed="false">
+            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
+            <span>Important</span>
+          </button>
+          <button type="button" class="toggle" data-flag="urgent" aria-pressed="false">
+            <span class="box"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.2 2.2 4.8-4.9"/></svg></span>
+            <span>Urgent</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Pills -->
+      <div>
+        <div class="section-label">
+          <span>Status</span>
+        </div>
+        <div class="status-grid" id="statuses"></div>
+      </div>
+
+      <!-- Keyboard Shortcuts Helper -->
+      <div class="shortcut-hint">
+        <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</span>
+        <span>·</span>
+        <span><kbd>Esc</kbd> to blur</span>
       </div>
     </main>
 
+    <!-- Bottom Action Dock -->
     <footer>
-      <button type="button" class="btn primary" id="done-btn">Mark done</button>
-      <button type="button" class="btn" id="new-btn">+ New task</button>
+      <button type="button" class="btn btn-primary" id="done-btn">Mark done</button>
+      <button type="button" class="btn btn-secondary" id="new-btn">+ New task</button>
     </footer>
   </div>
 
-  <!-- Nothing selected -->
+  <!-- Empty State (No task selected) -->
   <div class="empty" id="empty-view">
-    <div class="icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+    <div class="empty-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M3 9h18"/></svg>
     </div>
-    <h2 id="empty-title">Loading…</h2>
+    <h2 id="empty-title">Loading workspace…</h2>
     <p id="empty-text"></p>
-    <button type="button" class="btn primary" id="empty-btn" hidden></button>
+    <button type="button" class="btn btn-primary" id="empty-btn" hidden></button>
   </div>
 
   <script>
@@ -267,6 +595,7 @@
       title: $('title'),
       saveState: $('save-state'),
       toggles: Array.from(document.querySelectorAll('.toggle')),
+      qTiles: Array.from(document.querySelectorAll('.q-tile')),
     };
 
     const state = {
@@ -285,7 +614,7 @@
     const statusButtons = Object.keys(BOOT.statuses).map(name => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'status';
+      b.className = 'status-btn';
       b.textContent = name;
       b.setAttribute('aria-pressed', 'false');
       b.style.setProperty('--s-bg', BOOT.statuses[name].bg);
@@ -293,6 +622,27 @@
       b.addEventListener('click', () => edit('status', name, 0));
       $('statuses').appendChild(b);
       return b;
+    });
+
+    // ---------------------------------------------------------
+    // Matrix 2x2 Quadrant Tile Selection
+    // ---------------------------------------------------------
+    els.qTiles.forEach(tile => {
+      tile.addEventListener('click', () => {
+        const qId = tile.dataset.q;
+        const q = BOOT.quadrants.find(x => x.id === qId);
+        if (!q || !state.data) return;
+
+        state.data.important = q.important;
+        state.data.urgent = q.urgent;
+        state.patch.important = q.important;
+        state.patch.urgent = q.urgent;
+        state.editSeq++;
+        renderDerived();
+        setSaveState('pending');
+        clearTimeout(state.timer);
+        state.timer = setTimeout(flush, 0); // instant save
+      });
     });
 
     // ---------------------------------------------------------
@@ -306,13 +656,13 @@
     function showEmpty(reason) {
       $('task-view').hidden = true;
       $('empty-view').hidden = false;
-      $('row-tag').textContent = 'Task details';
+      $('row-tag').textContent = 'Row --';
       setSaveState('idle');
 
       const views = {
-        loading: ['Loading…', '', null],
-        sheet: ['Open the TODO sheet', 'Select any task there to see and edit its details here.', ['Go to TODO', goToTodo]],
-        header: ['Select a task', 'Click a task, or a task in Do Now / Schedule / Delegate / Delete, to edit it here.', ['+ New task', newTask]],
+        loading: ['Loading workspace…', 'Connecting to your Eisenhower Matrix sheet.', null],
+        sheet: ['Open the TODO sheet', 'Select any task row on the TODO sheet to edit its details and quadrant here.', ['Go to TODO', goToTodo]],
+        header: ['Select a task', 'Click any row on the TODO sheet or click a task in the live quadrant columns to inspect.', ['+ New task', newTask]],
       };
       const [title, text, action] = views[reason] || views.header;
       $('empty-title').textContent = title;
@@ -339,32 +689,38 @@
     /** Everything that depends on the current values but isn't a text field. */
     function renderDerived() {
       const d = state.data;
-      $('row-tag').textContent = 'Row ' + d.row;
+      $('row-tag').textContent = 'Row #' + d.row;
 
       els.toggles.forEach(t => t.setAttribute('aria-pressed', String(d[t.dataset.flag])));
       statusButtons.forEach(b => b.setAttribute('aria-pressed', String(b.textContent === d.status)));
 
-      const q = BOOT.quadrants.find(x => x.important === d.important && x.urgent === d.urgent);
+      const q = BOOT.quadrants.find(x => x.important === d.important && x.urgent === d.urgent) || BOOT.quadrants[3];
       const chip = $('quadrant');
       chip.style.background = q.bg;
       chip.style.color = q.text;
       chip.querySelector('i').style.background = q.accent;
       chip.querySelector('span').textContent = `${q.id} · ${q.title}`;
 
+      // Update 2x2 matrix tiles
+      els.qTiles.forEach(tile => {
+        tile.setAttribute('aria-selected', String(tile.dataset.q === q.id));
+      });
+      if ($('quadrant-hint')) $('quadrant-hint').textContent = `${q.id} · ${q.title}`;
+
       const isDone = d.status === 'Done';
       els.title.classList.toggle('done', isDone);
-      $('done-btn').textContent = isDone ? 'Reopen' : 'Mark done';
+      $('done-btn').textContent = isDone ? 'Reopen task' : '✓ Mark done';
     }
 
     function setSaveState(kind) {
-      const labels = { idle: '', pending: 'Unsaved', saving: 'Saving…', saved: 'Saved', error: 'Couldn’t save · Retry' };
+      const labels = { idle: '', pending: 'Unsaved', saving: 'Saving…', saved: 'Saved', error: 'Retry' };
       els.saveState.dataset.state = kind;
       els.saveState.textContent = labels[kind];
     }
 
     function autosize() {
       els.title.style.height = 'auto';
-      els.title.style.height = els.title.scrollHeight + 'px';
+      els.title.style.height = Math.max(38, els.title.scrollHeight) + 'px';
     }
 
     // ---------------------------------------------------------

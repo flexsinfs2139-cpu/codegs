@@ -80,7 +80,7 @@ function rebuildArchiveSheet_(sheet) {
   sheet.setColumnWidth(width, CONFIG.archivedWidth);
   sheet.setFrozenRows(1);
 
-  styleTable_(sheet.getRange(1, 1, rows, width), headers);
+  styleTable_(sheet.getRange(1, 1, rows, width), headers, THEME.archiveHeader, THEME.archiveHeaderText, THEME.border);
   sheet.getRange(2, COL.task, body, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
   sheet.getRange(2, COL.status, body, 1).setHorizontalAlignment('center');
   insertCheckboxes_(sheet.getRange(2, COL.important, body, 2));
@@ -88,8 +88,23 @@ function rebuildArchiveSheet_(sheet) {
     .setNumberFormat(CONFIG.dateFormat)
     .setHorizontalAlignment('center');
 
-  sheet.setConditionalFormatRules(statusRules_([sheet.getRange(2, COL.status, body, 1)]));
+  sheet.setConditionalFormatRules(archiveFormatRules_(sheet, body));
   sheet.setTabColor(THEME.archiveTab);
+}
+
+/** Formatting rules for the Archive sheet: Done strikethrough, status chips, and priority highlights. */
+function archiveFormatRules_(sheet, body) {
+  const doneRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=$${columnLetter_(COL.status)}2="Done"`)
+    .setFontColor(THEME.faint)
+    .setBackground(THEME.doneBg)
+    .setStrikethrough(true)
+    .setRanges([sheet.getRange(2, COL.task, body, 1)])
+    .build();
+
+  return [doneRule]
+    .concat(statusRules_([sheet.getRange(2, COL.status, body, 1)]))
+    .concat(priorityRules_(sheet, body));
 }
 
 /**

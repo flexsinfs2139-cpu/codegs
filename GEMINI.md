@@ -2,6 +2,9 @@
 
 This file serves as persistent memory and context for Antigravity (the equivalent of `CLAUDE.md` / `.claude` in Claude). It is automatically discovered and loaded into the agent's context window on every turn to retain conversation history, architectural decisions, and project conventions across sessions.
 
+> **Related Project Memory**:
+> - [Eisenhower Matrix ToDo Memory](./ToDo/GEMINI.md) — Dedicated context & architecture memory for `/home/rvkt/Documents/codegs/ToDo`.
+
 ---
 
 ## 1. Project Summary

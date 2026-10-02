@@ -31,8 +31,13 @@ function setupTodoSheet_(sheet, seed) {
   sheet.setFrozenRows(1);
 
   // Task table
-  styleTable_(sheet.getRange(1, 1, rows, width), COLUMNS.map(c => c.header));
+  styleTable_(sheet.getRange(1, 1, rows, width), COLUMNS.map(c => c.header), THEME.header, THEME.headerText, THEME.border);
   sheet.getRange(2, COL.task, body, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+
+  // Spacer column separator
+  sheet.getRange(1, MATRIX_COL - 1, rows, 1)
+    .setBackground(THEME.spacerBg)
+    .setBorder(false, false, false, false, false, false);
 
   // Sample tasks (brand-new sheet only)
   if (seed && SAMPLE_TASKS.length) {
@@ -51,9 +56,28 @@ function setupTodoSheet_(sheet, seed) {
   const statuses = data.map(r => [r[COL.status - 1]]);
   if (fillDefaultStatus_(data.map(r => [r[COL.task - 1]]), statuses)) statusRange.setValues(statuses);
 
-  // Quadrant columns: one live list of open tasks per quadrant
-  styleTable_(sheet.getRange(1, MATRIX_COL, rows, QUADRANTS.length), QUADRANTS.map(q => q.title));
-  sheet.getRange(2, MATRIX_COL, body, QUADRANTS.length).setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+  // Quadrant columns: distinct vibrant headers and gentle pastel column tints
+  QUADRANTS.forEach((q, i) => {
+    const colIndex = MATRIX_COL + i;
+    // Header (Row 1)
+    sheet.getRange(1, colIndex)
+      .setValue(q.headerLabel || q.title)
+      .setBackground(q.headerBg)
+      .setFontColor(q.headerFg || '#ffffff')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+
+    // Body (Rows 2..rows)
+    sheet.getRange(2, colIndex, body, 1)
+      .setBackground(q.bg)
+      .setFontColor(q.text)
+      .setWrapStrategy(SpreadsheetApp.WrapStrategy.CLIP);
+
+    // Grid border
+    sheet.getRange(1, colIndex, rows, 1)
+      .setBorder(true, true, true, true, true, true, THEME.border, SpreadsheetApp.BorderStyle.SOLID);
+  });
+
   sheet.getRange(2, MATRIX_COL, 1, QUADRANTS.length)
     .setFormulas([QUADRANTS.map(quadrantListFormula_)]);
   sheet.getRange(1, MATRIX_COL, rows, QUADRANTS.length).protect()
@@ -61,18 +85,24 @@ function setupTodoSheet_(sheet, seed) {
     .setWarningOnly(true);
 
   sheet.setConditionalFormatRules(todoFormatRules_(sheet, body));
+  sheet.setTabColor(THEME.todoTab);
 }
 
-/** Done tasks muted and struck through, status chips. */
+/** Full-color rules: Done strike-through, Quadrant highlights on tasks, Status chips, Priority highlights, and Quadrant column tasks. */
 function todoFormatRules_(sheet, body) {
   const doneRule = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied(`=$${columnLetter_(COL.status)}2="Done"`)
     .setFontColor(THEME.faint)
+    .setBackground(THEME.doneBg)
     .setStrikethrough(true)
     .setRanges([sheet.getRange(2, COL.task, body, 1)])
     .build();
 
-  return [doneRule].concat(statusRules_([sheet.getRange(2, COL.status, body, 1)]));
+  return [doneRule]
+    .concat(taskQuadrantHighlightRules_(sheet, body))
+    .concat(statusRules_([sheet.getRange(2, COL.status, body, 1)]))
+    .concat(priorityRules_(sheet, body))
+    .concat(quadrantColumnRules_(sheet, body));
 }
 
 /** onEdit handler: newly typed (or pasted) tasks get the default status. */

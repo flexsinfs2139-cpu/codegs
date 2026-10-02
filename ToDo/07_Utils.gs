@@ -104,13 +104,16 @@ function migrateColumns_(sheet, headers) {
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 }
 
-/** Black header row and a thin border on every cell of the table. */
-function styleTable_(range, headers) {
-  range.setBorder(true, true, true, true, true, true, THEME.border, SpreadsheetApp.BorderStyle.SOLID);
+/** Styled header row and clean borders for a table range. */
+function styleTable_(range, headers, headerBg, headerFg, borderColor) {
+  const bg = headerBg || THEME.header;
+  const fg = headerFg || THEME.headerText;
+  const border = borderColor || THEME.border;
+  range.setBorder(true, true, true, true, true, true, border, SpreadsheetApp.BorderStyle.SOLID);
   range.getSheet().getRange(range.getRow(), range.getColumn(), 1, headers.length)
     .setValues([headers])
-    .setBackground(THEME.header)
-    .setFontColor(THEME.headerText)
+    .setBackground(bg)
+    .setFontColor(fg)
     .setFontWeight('bold')
     .setHorizontalAlignment('center');
 }
