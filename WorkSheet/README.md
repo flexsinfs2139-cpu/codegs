@@ -39,8 +39,8 @@ The codebase is organized into 8 functional modules comprising 14 Google Apps Sc
 
 ```text
 WorkSheet/
+├── Code.gs                      # Master setupWorkTracker() pipeline and centralized triggers (onEdit, onChange)
 ├── core/
-│   ├── Code.gs                  # Master setupWorkTracker() pipeline and centralized triggers (onEdit, onChange)
 │   ├── Config.gs                # Central configuration: tokens, schemas, dimensions, colors, fonts
 │   ├── Lists.gs                 # Validation reference lists, named ranges, and sheet protection
 │   ├── Menu.gs                  # Four top-level toolbar menus: WorkSheet, Setup, Tasks, and DSR
@@ -76,7 +76,7 @@ WorkSheet/
 
 | Module | File | Primary Functions / Role | Description |
 | :--- | :--- | :--- | :--- |
-| **`core/`** | [`Code.gs`](./core/Code.gs) | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Primary operational entry point. Idempotent master setup routine and workbook trigger router. |
+| **`root`** | [`Code.gs`](./Code.gs) | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Primary operational entry point. Idempotent master setup routine and workbook trigger router. |
 | **`core/`** | [`Config.gs`](./core/Config.gs) | `CONFIG` object | Central configuration for dimensions, typography, colors, headers, and reference lists. |
 | **`core/`** | [`Lists.gs`](./core/Lists.gs) | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
 | **`core/`** | [`Menu.gs`](./core/Menu.gs) | `onOpen` | Injects four top-level toolbar menus: `WorkSheet`, `Setup`, `Tasks`, and `DSR`. |
@@ -102,7 +102,7 @@ WorkSheet/
 
 ## Master Setup (`setupWorkTracker`)
 
-`setupWorkTracker(suppressAlert)` in [`core/Code.gs`](./core/Code.gs) is the **single master entry point** for provisioning, repairing, or upgrading the entire system.
+`setupWorkTracker(suppressAlert)` in [`Code.gs`](./Code.gs) is the **single master entry point** for provisioning, repairing, or upgrading the entire system.
 
 ### Key Behaviors:
 1. **Idempotent**: Safe to run once or ten times. It never duplicates sheets, triggers, named ranges, or formatting rules.
@@ -271,7 +271,7 @@ const CONFIG = {
 
 ## Trigger Architecture & Real-Time Sync
 
-1. **Centralized Router in `core/Code.gs`**:
+1. **Centralized Router in `Code.gs`**:
    - `onEdit(e)` simple trigger coordinates spreadsheet edits and `updateDashboardOnChange(e)`.
    - `onChange(e)` installable trigger listens for structural sheet changes.
 2. **Duplicate Prevention**: `setupTriggers(ss)` checks `ScriptApp.getProjectTriggers()` to guarantee only one `onChange` trigger exists.

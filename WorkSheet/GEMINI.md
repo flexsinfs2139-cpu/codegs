@@ -17,7 +17,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 
 | Module | File | Primary Role | Key Functions / Objects |
 | :--- | :--- | :--- | :--- |
-| **`core/`** | [`WorkSheet/core/Code.gs`](./core/Code.gs) | Master entry points & trigger routing | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `setupTriggers`, `onEdit`, `onChange` |
+| **`root`** | [`WorkSheet/Code.gs`](./Code.gs) | Master entry points & trigger routing | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `setupTriggers`, `onEdit`, `onChange` |
 | **`core/`** | [`WorkSheet/core/Config.gs`](./core/Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Dimensions, Fonts, Dashboard) |
 | **`core/`** | [`WorkSheet/core/Lists.gs`](./core/Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
 | **`core/`** | [`WorkSheet/core/Menu.gs`](./core/Menu.gs) | Toolbar UI menus | `onOpen` (four top-level menus: `WorkSheet`, `Setup`, `Tasks`, `DSR`) |
