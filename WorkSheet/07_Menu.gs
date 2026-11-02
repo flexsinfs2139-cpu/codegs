@@ -10,32 +10,36 @@
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
-  // Submenu: Tasks
-  const tasksMenu = ui.createMenu('Tasks')
-    .addItem('Fill Task for Today', 'fillTaskForToday')
-    .addItem('Fill Task for Selected Date', 'fillTaskForSelectedDate');
-
-  // Submenu: DSR
-  const dsrMenu = ui.createMenu('DSR')
-    .addItem('Generate DSR for Today', 'generateDSRForToday')
-    .addItem('Generate DSR for Selected Date', 'generateDSRForSelectedDate');
-
-  // Submenu: Advanced
-  const advancedMenu = ui.createMenu('Advanced')
-    .addItem('Refresh Dashboard', 'refreshDashboard')
-    .addItem('Rebuild Lists', 'rebuildLists')
-    .addItem('Create Current Month Sheet', 'createCurrentMonthSheet')
-    .addItem('Enforce Single Todo Quadrant', 'sanitizeAllTodoQuadrants')
-    .addItem('Populate Dummy Data', 'populateDummyData');
-
-  // Root WorkSheet Menu
+  // 1. WorkSheet Menu (Navigation & Core Actions)
   ui.createMenu('WorkSheet')
+    .addItem('📊 Open Dashboard', 'openDashboard')
+    .addItem('🎯 Open Todo Sheet', 'openTodoSheet')
+    .addItem('📅 Create Current Month Sheet', 'createCurrentMonthSheet')
+    .addSeparator()
     .addItem('⚡ Setup / Repair Work Tracker', 'setupWorkTracker')
+    .addToUi();
+
+  // 2. Setup Menu (Combined Setup & Advanced Administration)
+  ui.createMenu('Setup')
+    .addItem('⚡ Setup / Repair Work Tracker', 'setupWorkTracker')
+    .addItem('🔄 Refresh Dashboard', 'refreshDashboard')
+    .addItem('📋 Rebuild Reference Lists', 'rebuildLists')
+    .addItem('📅 Create Current Month Sheet', 'createCurrentMonthSheet')
+    .addItem('🎯 Enforce Single Todo Quadrant', 'sanitizeAllTodoQuadrants')
     .addSeparator()
-    .addSubMenu(tasksMenu)
-    .addSubMenu(dsrMenu)
-    .addSeparator()
-    .addSubMenu(advancedMenu)
+    .addItem('🧪 Populate Dummy Data', 'populateDummyData')
+    .addToUi();
+
+  // 3. Tasks Menu (Daily Task Logging)
+  ui.createMenu('Tasks')
+    .addItem('Fill Task for Today', 'fillTaskForToday')
+    .addItem('Fill Task for Selected Date', 'fillTaskForSelectedDate')
+    .addToUi();
+
+  // 4. DSR Menu (Daily Status Report Generation)
+  ui.createMenu('DSR')
+    .addItem('Generate DSR for Today', 'generateDSRForToday')
+    .addItem('Generate DSR for Selected Date', 'generateDSRForSelectedDate')
     .addToUi();
 }
 

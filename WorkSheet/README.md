@@ -48,7 +48,7 @@ WorkSheet/
 ├── 04_DSRDialog.html           # Production modal dialog UI for DSR reports with date switching
 ├── 05_Formatting.gs            # Visual styling, layout dimensions, borders, and safe gridline hiding
 ├── 06_Lists.gs                 # Validation reference lists, named ranges, and sheet protection
-├── 07_Menu.gs                  # Single unified 'WorkSheet' menu with submenus and direct openers
+├── 07_Menu.gs                  # Four top-level toolbar menus: WorkSheet, Setup, Tasks, and DSR
 ├── 08_MonthSheet.gs            # Idempotent monthly sheet creation and non-destructive refresh
 ├── 09_Tasks.gs                 # Task operations, batch insertion, dropdown rules, and modal dialog
 ├── 09_TaskDialog.html          # Production modal dialog UI for multi-task batch entry
@@ -72,7 +72,7 @@ WorkSheet/
 | **`04_DSRDialog.html`** | DSR Modal UI | Interactive DSR modal dialog with live calendar date switcher and 1-click export actions. |
 | **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies SaaS typography, subtle `#cbd5e1` borders, dimensions, and safe gridline hiding. |
 | **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
-| **`07_Menu.gs`** | `onOpen` | Injects the unified `WorkSheet` toolbar menu with `Tasks`, `DSR`, and `Advanced` submenus. |
+| **`07_Menu.gs`** | `onOpen` | Injects four top-level toolbar menus: `WorkSheet`, `Setup` (combined with Advanced), `Tasks`, and `DSR`. |
 | **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Idempotently creates or refreshes monthly task sheets without deleting existing task data. |
 | **`09_Tasks.gs`** | `fillTaskForToday`, `fillTaskForSelectedDate`, `saveTasksBatch`, `clearTasks` | Controller for fast multi-task batch logging; loads `09_TaskDialog.html` with resilient fallback. |
 | **`09_TaskDialog.html`** | Task Entry Modal UI | Clean batch task modal with project/category/priority selection, `Ctrl + Enter` shortcut, and `+ Add & Next Project` workflow. |
@@ -152,29 +152,36 @@ The dedicated `Todo` sheet implements the Eisenhower decision framework:
 - Styled interactive modal (`04_DSRDialog.html`) with live date switching, **Copy to Clipboard**, **Save to Sheet**, and **Download .txt**.
 
 ### 5. Visual Calendar Picker
-- Accessible via **WorkSheet** > **Tasks** > **Fill Task for Selected Date** or **WorkSheet** > **DSR** > **Generate DSR for Selected Date**.
+- Accessible via **Tasks** > **Fill Task for Selected Date** or **DSR** > **Generate DSR for Selected Date**.
 - Interactive calendar widget (`01_CalendarPickerDialog.html`) allowing date selection with arrow keys, click, or double-click to proceed directly.
 
-### 6. Unified WorkSheet Toolbar Menu
-Consolidated single top-level menu hierarchy:
+### 6. Four Top-Level Toolbar Menus
+Clean, modular top-level menu hierarchy directly on the Google Sheets menu bar:
 
 ```text
-WorkSheet
-├── ⚡ Setup / Repair Work Tracker  → setupWorkTracker()
-├── ─────────────────────────────
-├── Tasks ▶
-│   ├── Fill Task for Today        → fillTaskForToday()
-│   └── Fill Task for Selected Date→ fillTaskForSelectedDate()
-├── DSR ▶
-│   ├── Generate DSR for Today     → generateDSRForToday()
-│   └── Generate DSR for Selected Date → generateDSRForSelectedDate()
-├── ─────────────────────────────
-└── Advanced ▶
-    ├── Refresh Dashboard          → refreshDashboard()
-    ├── Rebuild Lists              → rebuildLists()
-    ├── Create Current Month Sheet → createCurrentMonthSheet()
-    ├── Enforce Single Todo Quadrant→ sanitizeAllTodoQuadrants()
-    └── Populate Dummy Data        → populateDummyData()
+1. WorkSheet (Navigation & Core Views)
+   ├── 📊 Open Dashboard           → openDashboard()
+   ├── 🎯 Open Todo Sheet          → openTodoSheet()
+   ├── 📅 Create Current Month Sheet → createCurrentMonthSheet()
+   ├── ───────────────────────────
+   └── ⚡ Setup / Repair Work Tracker → setupWorkTracker()
+
+2. Setup (Combined Setup & Advanced Utilities)
+   ├── ⚡ Setup / Repair Work Tracker → setupWorkTracker()
+   ├── 🔄 Refresh Dashboard        → refreshDashboard()
+   ├── 📋 Rebuild Reference Lists  → rebuildLists()
+   ├── 📅 Create Current Month Sheet → createCurrentMonthSheet()
+   ├── 🎯 Enforce Single Todo Quadrant → sanitizeAllTodoQuadrants()
+   ├── ───────────────────────────
+   └── 🧪 Populate Dummy Data      → populateDummyData()
+
+3. Tasks (Daily Task Logging)
+   ├── Fill Task for Today         → fillTaskForToday()
+   └── Fill Task for Selected Date → fillTaskForSelectedDate()
+
+4. DSR (Daily Status Report Generation)
+   ├── Generate DSR for Today      → generateDSRForToday()
+   └── Generate DSR for Selected Date → generateDSRForSelectedDate()
 ```
 
 ---

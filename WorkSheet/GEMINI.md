@@ -26,7 +26,7 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | [`WorkSheet/04_DSRDialog.html`](./WorkSheet/04_DSRDialog.html) | DSR interactive modal UI | Dedicated HTML template with live date switcher and export buttons |
 | [`WorkSheet/05_Formatting.gs`](./WorkSheet/05_Formatting.gs) | Visual layout & styling | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` |
 | [`WorkSheet/06_Lists.gs`](./WorkSheet/06_Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
-| [`WorkSheet/07_Menu.gs`](./WorkSheet/07_Menu.gs) | Toolbar UI menus | `onOpen` (unified `WorkSheet` menu with `Tasks`, `DSR`, and `Advanced`) |
+| [`WorkSheet/07_Menu.gs`](./WorkSheet/07_Menu.gs) | Toolbar UI menus | `onOpen` (four top-level menus: `WorkSheet`, `Setup`, `Tasks`, `DSR`) |
 | [`WorkSheet/08_MonthSheet.gs`](./WorkSheet/08_MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
 | [`WorkSheet/09_Tasks.gs`](./WorkSheet/09_Tasks.gs) | Task operations & batch insertion | `fillTaskForToday`, `fillTaskForSelectedDate`, `setupDropdowns`, `saveTasksBatch`, `clearTasks` |
 | [`WorkSheet/09_TaskDialog.html`](./WorkSheet/09_TaskDialog.html) | Multi-task batch entry modal UI | Dedicated HTML template with `Ctrl + Enter` and `+ Add & Next Project` |
@@ -87,7 +87,8 @@ This file serves as persistent memory and context for Antigravity (the equivalen
     - Structured logging pipeline: `[WorkSheet] Setup started`, `[WorkSheet] Lists verified`, `[WorkSheet] Todo verified`, `[WorkSheet] Current month verified`, `[WorkSheet] Dashboard verified`, `[WorkSheet] Validations & Formatting configured`, `[WorkSheet] Triggers verified`, `[WorkSheet] Setup completed`.
     - Centralized trigger setup (`setupTriggers`) with duplicate detection via `ScriptApp.getProjectTriggers()`.
     - Executive 14-Column Command Center in `12_Dashboard.gs`: 6 KPI cards displaying grand totals and today's counts as secondary subtitles, side-by-side Monthly Breakdown (Cols 1–7) and 6-column Project Performance (Cols 9–14: `Project`, `Total`, `Completed`, `In Progress`, `Blocked`, `Completion %`) sorted deterministically, plus 6 Eisenhower Todo cards.
-    - Unified single top-level `WorkSheet` toolbar menu in `07_Menu.gs` with structured submenus (`Tasks`, `DSR`, `Advanced`).
+    - Modular Four Top-Level Toolbar Menus in `07_Menu.gs`: `WorkSheet` (Hub/Navigation), `Setup` (combined Setup & Advanced admin tools), `Tasks` (daily task logging), and `DSR` (daily status reporting).
+    - Idempotent Month Sheet upgrade in `08_MonthSheet.gs` preserving row 2+ user tasks.
     - Idempotent Month Sheet upgrade in `08_MonthSheet.gs` preserving row 2+ user tasks.
 
 ---
