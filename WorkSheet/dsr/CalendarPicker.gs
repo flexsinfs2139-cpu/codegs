@@ -27,10 +27,12 @@ function openCalendarPicker(mode, initialDate) {
 
   let htmlOutput;
   const candidateTemplateNames = [
-    '01_CalendarPickerDialog',
+    'dsr/CalendarPickerDialog',
     'CalendarPickerDialog',
-    '01_CalendarPicker',
-    'CalendarPicker'
+    '01_CalendarPickerDialog',
+    'dsr/CalendarPicker',
+    'CalendarPicker',
+    '01_CalendarPicker'
   ];
 
   for (const tName of candidateTemplateNames) {

@@ -578,13 +578,20 @@ function handleMonthSheetEdit(sheet, row, col, e) {
 function openRecordDecisionDialog() {
   const allTasks = getAllTodoTasks();
   let htmlOutput;
+  const candidateNames = ['timeline/DecisionDialog', 'DecisionDialog', '14_DecisionDialog'];
+  for (const name of candidateNames) {
+    try {
+      const template = HtmlService.createTemplateFromFile(name);
+      template.tasks = allTasks;
+      template.eventTypes = CONFIG.EVENT_TYPES;
+      htmlOutput = template.evaluate();
+      if (htmlOutput) break;
+    } catch (ignore) {
+      // Continue next candidate
+    }
+  }
 
-  try {
-    const template = HtmlService.createTemplateFromFile('14_DecisionDialog');
-    template.tasks = allTasks;
-    template.eventTypes = CONFIG.EVENT_TYPES;
-    htmlOutput = template.evaluate();
-  } catch (err) {
+  if (!htmlOutput) {
     const fallbackHtml = getFallbackDecisionDialogHtml(allTasks);
     htmlOutput = HtmlService.createHtmlOutput(fallbackHtml);
   }
@@ -657,14 +664,22 @@ function openTaskHistoryDialog(preSelectedTaskId) {
   const taskDetails = targetId ? getTodoTaskById(targetId) : null;
 
   let htmlOutput;
-  try {
-    const template = HtmlService.createTemplateFromFile('14_TimelineDialog');
-    template.tasks = allTasks;
-    template.selectedTaskId = targetId || '';
-    template.taskDetails = taskDetails;
-    template.events = events;
-    htmlOutput = template.evaluate();
-  } catch (err) {
+  const candidateNames = ['timeline/TimelineDialog', 'TimelineDialog', '14_TimelineDialog'];
+  for (const name of candidateNames) {
+    try {
+      const template = HtmlService.createTemplateFromFile(name);
+      template.tasks = allTasks;
+      template.selectedTaskId = targetId || '';
+      template.taskDetails = taskDetails;
+      template.events = events;
+      htmlOutput = template.evaluate();
+      if (htmlOutput) break;
+    } catch (ignore) {
+      // Continue next candidate
+    }
+  }
+
+  if (!htmlOutput) {
     const fallbackHtml = getFallbackTimelineDialogHtml(allTasks, targetId, events);
     htmlOutput = HtmlService.createHtmlOutput(fallbackHtml);
   }

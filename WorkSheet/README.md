@@ -35,65 +35,74 @@ WorkSheet eliminates the friction of manual spreadsheet maintenance. It provisio
 
 ## Architecture & File Structure
 
-The codebase is organized into 14 modular Google Apps Script files and 3 standalone production HTML templates:
+The codebase is organized into 8 functional modules comprising 14 Google Apps Script files and 5 standalone production HTML templates:
 
 ```text
 WorkSheet/
-├── 00_Code.gs                  # Master setupWorkTracker() pipeline and centralized triggers (onEdit, onChange)
-├── 01_CalendarPicker.gs        # Controller for interactive visual calendar date picker
-├── 01_CalendarPickerDialog.html # Production modal dialog UI for calendar date selection
-├── 02_ConditionalFormatting.gs # Semantic status, priority, and weekend formatting rules
-├── 03_Config.gs                # Central configuration: tokens, schemas, dimensions, colors, fonts
-├── 04_DSR.gs                   # Daily Status Report generator with Task ID traceability and export
-├── 04_DSRDialog.html           # Production modal dialog UI for DSR reports with date switching
-├── 05_Formatting.gs            # Visual styling, layout dimensions, borders, and safe gridline hiding
-├── 06_Lists.gs                 # Validation reference lists, named ranges, and sheet protection
-├── 07_Menu.gs                  # Four top-level toolbar menus: WorkSheet, Setup, Tasks, and DSR
-├── 08_MonthSheet.gs            # 8-column monthly task sheet creation with Task ID dropdown linking
-├── 09_Tasks.gs                 # Task operations, batch insertion, dropdown rules, and modal dialog
-├── 09_TaskDialog.html          # Production modal dialog UI for multi-task batch entry
-├── 10_Utils.gs                 # Helper utilities: timezones, dates, sheet trimming, safe gridlines
-├── 11_Todo.gs                  # Simplified 5-column Todo backlog engine with auto-assigned Task IDs
-├── 12_Dashboard.gs             # Modern SaaS Command Center dashboard (14 columns, backlog schedule KPIs)
-├── 13_SampleData.gs            # 1-click realistic dummy data seeding engine
-├── 14_Timeline.gs              # Chronological Decisions timeline engine and monotonic ID generator
-├── 14_DecisionDialog.html      # Production modal dialog UI for recording decisions and timeline events
-├── 14_TimelineDialog.html      # Interactive visual Task History / Timeline viewer modal dialog
-├── 15_Migration.gs             # Safe, non-destructive migration engine upgrading Todo & Month sheets
-└── README.md                   # Complete developer & user documentation
+├── core/
+│   ├── Code.gs                  # Master setupWorkTracker() pipeline and centralized triggers (onEdit, onChange)
+│   ├── Config.gs                # Central configuration: tokens, schemas, dimensions, colors, fonts
+│   ├── Lists.gs                 # Validation reference lists, named ranges, and sheet protection
+│   ├── Menu.gs                  # Four top-level toolbar menus: WorkSheet, Setup, Tasks, and DSR
+│   └── Utils.gs                 # Helper utilities: timezones, dates, sheet trimming, safe gridlines
+├── tasks/
+│   ├── MonthSheet.gs            # 8-column monthly task sheet creation with Task ID dropdown linking
+│   ├── Tasks.gs                 # Task operations, batch insertion, dropdown rules, and modal dialog
+│   └── TaskDialog.html          # Production modal dialog UI for multi-task batch entry
+├── todo/
+│   └── Todo.gs                  # Simplified 5-column Todo backlog engine with auto-assigned Task IDs
+├── timeline/
+│   ├── Timeline.gs              # Chronological Decisions timeline engine and monotonic ID generator
+│   ├── DecisionDialog.html      # Production modal dialog UI for recording decisions and timeline events
+│   └── TimelineDialog.html      # Interactive visual Task History / Timeline viewer modal dialog
+├── dashboard/
+│   └── Dashboard.gs             # Modern SaaS Command Center dashboard (14 columns, backlog schedule KPIs)
+├── dsr/
+│   ├── CalendarPicker.gs        # Controller for interactive visual calendar date picker
+│   ├── CalendarPickerDialog.html # Production modal dialog UI for calendar date selection
+│   ├── DSR.gs                   # Daily Status Report generator with Task ID traceability and export
+│   └── DSRDialog.html           # Production modal dialog UI for DSR reports with date switching
+├── styles/
+│   ├── ConditionalFormatting.gs # Semantic status, priority, and weekend formatting rules
+│   └── Formatting.gs            # Visual styling, layout dimensions, borders, and safe gridline hiding
+├── admin/
+│   ├── Migration.gs             # Safe, non-destructive migration engine upgrading Todo & Month sheets
+│   └── SampleData.gs            # 1-click realistic dummy data seeding engine
+├── GEMINI.md                    # Antigravity context & project memory
+└── README.md                    # Complete developer & user documentation
 ```
 
-### File Responsibilities
+### File Responsibilities by Module
 
-| File | Primary Functions / Role | Description |
-| :--- | :--- | :--- |
-| **`00_Code.gs`** | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Primary operational entry point. Idempotent master setup routine and workbook trigger router. |
-| **`01_CalendarPicker.gs`** | `openCalendarPicker`, `proceedFromCalendar` | Backend controller for the visual calendar picker; loads `01_CalendarPickerDialog.html` with resilient fallback. |
-| **`01_CalendarPickerDialog.html`** | Calendar Modal UI | Standalone visual date picker modal with `Varela Round` and `Roboto Mono` fonts, keyboard navigation, and date selection. |
-| **`02_ConditionalFormatting.gs`** | `setupConditionalFormatting`, `setupWeekendFormatting` | Applies semantic pastel tags for Statuses (Col H), Priorities (Col G), and weekend rows across columns A–H. |
-| **`03_Config.gs`** | `CONFIG` object | Central configuration for dimensions, typography, colors, headers, and reference lists. |
-| **`04_DSR.gs`** | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles daily status reports categorized by project with Task ID traceability, copy, .txt download, and sheet logging. |
-| **`04_DSRDialog.html`** | DSR Modal UI | Interactive DSR modal dialog with live calendar date switcher and 1-click export actions. |
-| **`05_Formatting.gs`** | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies SaaS typography, subtle `#cbd5e1` borders, dimensions, and safe gridline hiding across 8 columns. |
-| **`06_Lists.gs`** | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
-| **`07_Menu.gs`** | `onOpen` | Injects four top-level toolbar menus: `WorkSheet`, `Setup`, `Tasks`, and `DSR`. |
-| **`08_MonthSheet.gs`** | `createCurrentMonthSheet`, `createMonthRows` | Idempotently creates or refreshes 8-column monthly task sheets without deleting existing task data. |
-| **`09_Tasks.gs`** | `fillTaskForToday`, `fillTaskForSelectedDate`, `saveTasksBatch`, `clearTasks` | Controller for fast multi-task batch logging; loads `09_TaskDialog.html` with resilient fallback. |
-| **`09_TaskDialog.html`** | Task Entry Modal UI | Clean batch task modal with project/category/priority selection, `Ctrl + Enter` shortcut, and `+ Add & Next Project` workflow. |
-| **`10_Utils.gs`** | `setSheetGridlinesHidden`, `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Core utilities including safe gridline toggling that avoids unsupported Google Sheets API errors. |
-| **`11_Todo.gs`** | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `ensureAllTodoRowsHaveIds` | Simplified 5-column Todo backlog tracker with auto-assigned permanent Task IDs (`TSK-XXXX`). |
-| **`12_Dashboard.gs`** | `refreshDashboard`, `updateDashboardOnChange`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern 14-column SaaS Command Center aggregating monthly metrics, project stats, and backlog schedule KPIs. |
-| **`13_SampleData.gs`** | `populateDummyData`, `populateTodoDummyData`, `populateMonthDummyData`, `populateDecisionsDummyData` | Seeds 12 backlog tasks with Task IDs, 21 monthly tasks, and sample timeline events with 1 click. |
-| **`14_Timeline.gs`** | `ensureDecisionsSheet`, `recordTimelineEvent`, `getTaskTimelineHistory`, `generateNextTaskId`, `handleSpreadsheetEdit` | Central engine for the Decisions timeline, monotonic ID generation, and automatic status change logging. |
-| **`14_DecisionDialog.html`** | Decision Entry Modal UI | Production modal dialog for manually recording decisions, rationale, owners, and follow-up actions. |
-| **`14_TimelineDialog.html`** | Task History Modal UI | Interactive chronological visual timeline viewer rendering the full lifecycle history of any task. |
-| **`15_Migration.gs`** | `runFullSystemMigration`, `migrateTodoSheet`, `migrateAllMonthSheets` | Automated, non-destructive migration engine upgrading Todo to 5 columns and Month sheets to 8 columns. |
+| Module | File | Primary Functions / Role | Description |
+| :--- | :--- | :--- | :--- |
+| **`core/`** | [`Code.gs`](./core/Code.gs) | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `onEdit`, `onChange` | Primary operational entry point. Idempotent master setup routine and workbook trigger router. |
+| **`core/`** | [`Config.gs`](./core/Config.gs) | `CONFIG` object | Central configuration for dimensions, typography, colors, headers, and reference lists. |
+| **`core/`** | [`Lists.gs`](./core/Lists.gs) | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` | Manages reference lists, named ranges consumed by dropdowns, and sheet protection. |
+| **`core/`** | [`Menu.gs`](./core/Menu.gs) | `onOpen` | Injects four top-level toolbar menus: `WorkSheet`, `Setup`, `Tasks`, and `DSR`. |
+| **`core/`** | [`Utils.gs`](./core/Utils.gs) | `setSheetGridlinesHidden`, `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday` | Core utilities including safe gridline toggling that avoids unsupported Google Sheets API errors. |
+| **`tasks/`** | [`MonthSheet.gs`](./tasks/MonthSheet.gs) | `createCurrentMonthSheet`, `createMonthRows` | Idempotently creates or refreshes 8-column monthly task sheets without deleting existing task data. |
+| **`tasks/`** | [`Tasks.gs`](./tasks/Tasks.gs) | `fillTaskForToday`, `fillTaskForSelectedDate`, `saveTasksBatch`, `clearTasks` | Controller for fast multi-task batch logging; loads `TaskDialog.html` with resilient fallback. |
+| **`tasks/`** | [`TaskDialog.html`](./tasks/TaskDialog.html) | Task Entry Modal UI | Clean batch task modal with project/category/priority selection, `Ctrl + Enter` shortcut, and `+ Add & Next Project` workflow. |
+| **`todo/`** | [`Todo.gs`](./todo/Todo.gs) | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `ensureAllTodoRowsHaveIds` | Simplified 5-column Todo backlog tracker with auto-assigned permanent Task IDs (`TSK-XXXX`). |
+| **`timeline/`** | [`Timeline.gs`](./timeline/Timeline.gs) | `ensureDecisionsSheet`, `recordTimelineEvent`, `getTaskTimelineHistory`, `generateNextTaskId`, `handleSpreadsheetEdit` | Central engine for the Decisions timeline, monotonic ID generation, and automatic status change logging. |
+| **`timeline/`** | [`DecisionDialog.html`](./timeline/DecisionDialog.html) | Decision Entry Modal UI | Production modal dialog for manually recording decisions, rationale, owners, and follow-up actions. |
+| **`timeline/`** | [`TimelineDialog.html`](./timeline/TimelineDialog.html) | Task History Modal UI | Interactive chronological visual timeline viewer rendering the full lifecycle history of any task. |
+| **`dashboard/`** | [`Dashboard.gs`](./dashboard/Dashboard.gs) | `refreshDashboard`, `updateDashboardOnChange`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` | Modern 14-column SaaS Command Center aggregating monthly metrics, project stats, and backlog schedule KPIs. |
+| **`dsr/`** | [`CalendarPicker.gs`](./dsr/CalendarPicker.gs) | `openCalendarPicker`, `proceedFromCalendar` | Backend controller for the visual calendar picker; loads `CalendarPickerDialog.html` with resilient fallback. |
+| **`dsr/`** | [`CalendarPickerDialog.html`](./dsr/CalendarPickerDialog.html) | Calendar Modal UI | Standalone visual date picker modal with `Varela Round` and `Roboto Mono` fonts, keyboard navigation, and date selection. |
+| **`dsr/`** | [`DSR.gs`](./dsr/DSR.gs) | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` | Compiles daily status reports categorized by project with Task ID traceability, copy, .txt download, and sheet logging. |
+| **`dsr/`** | [`DSRDialog.html`](./dsr/DSRDialog.html) | DSR Modal UI | Interactive DSR modal dialog with live calendar date switcher and 1-click export actions. |
+| **`styles/`** | [`ConditionalFormatting.gs`](./styles/ConditionalFormatting.gs) | `setupConditionalFormatting`, `setupWeekendFormatting` | Applies semantic pastel tags for Statuses (Col H), Priorities (Col G), and weekend rows across columns A–H. |
+| **`styles/`** | [`Formatting.gs`](./styles/Formatting.gs) | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` | Applies SaaS typography, subtle `#cbd5e1` borders, dimensions, and safe gridline hiding across 8 columns. |
+| **`admin/`** | [`Migration.gs`](./admin/Migration.gs) | `runFullSystemMigration`, `migrateTodoSheet`, `migrateAllMonthSheets` | Automated, non-destructive migration engine upgrading Todo to 5 columns and Month sheets to 8 columns. |
+| **`admin/`** | [`SampleData.gs`](./admin/SampleData.gs) | `populateDummyData`, `populateTodoDummyData`, `populateMonthDummyData`, `populateDecisionsDummyData` | Seeds 12 backlog tasks with Task IDs, 21 monthly tasks, and sample timeline events with 1 click. |
 
 ---
 
 ## Master Setup (`setupWorkTracker`)
 
-`setupWorkTracker(suppressAlert)` in [`00_Code.gs`](./00_Code.gs) is the **single master entry point** for provisioning, repairing, or upgrading the entire system.
+`setupWorkTracker(suppressAlert)` in [`core/Code.gs`](./core/Code.gs) is the **single master entry point** for provisioning, repairing, or upgrading the entire system.
 
 ### Key Behaviors:
 1. **Idempotent**: Safe to run once or ten times. It never duplicates sheets, triggers, named ranges, or formatting rules.
@@ -146,7 +155,7 @@ The dedicated `Todo` sheet implements a clean 5-column project backlog:
 - **Task ID Auto-Population**:
   - Selecting a `Task ID` in Column C automatically fills `Task` (Col E) and `Project` (Col D) from the Todo backlog.
   - Historical work log entries remain preserved even if the original task is completed or removed from Todo.
-- **Fast Batch Task Logging Modal (`09_TaskDialog.html`)**:
+- **Fast Batch Task Logging Modal (`tasks/TaskDialog.html`)**:
   - Accessible via **Tasks** > **Fill Task for Today** or **Fill Task for Selected Date**.
   - Select Project, Category, and Priority once; enter or paste multiple tasks into a textarea.
   - Automatically defaults to `Pending` status and records `Task Created` in the Decisions timeline.
@@ -156,7 +165,7 @@ The dedicated `Todo` sheet implements a clean 5-column project backlog:
 - Dedicated `Decisions` sheet providing an immutable audit trail of all task events:
   - Columns: `Timeline ID`, `Task ID`, `Event Date`, `Event Type`, `Previous Status`, `New Status`, `Decision / Event`, `Rationale`, `Decided By`, `Next Action`, `Due Date`, `Reference`.
   - Supports 12 event types including `Task Created`, `Status Changed`, `Decision Made`, `Blocker Identified`, `Blocker Resolved`, `Due Date Changed`, `Scope Changed`, etc.
-  - Accessible via **Tasks** > **Record Decision / Event** (`14_DecisionDialog.html`) and **Tasks** > **View Task History & Timeline** (`14_TimelineDialog.html`).
+  - Accessible via **Tasks** > **Record Decision / Event** (`timeline/DecisionDialog.html`) and **Tasks** > **View Task History & Timeline** (`timeline/TimelineDialog.html`).
 
 ### 5. Daily Status Report (DSR) Engine
 - Accessible via **DSR** > **Generate DSR for Today** or **Generate DSR for Selected Date**.
@@ -166,7 +175,7 @@ The dedicated `Todo` sheet implements a clean 5-column project backlog:
   3. `Blockers / Issues`
   4. `Plan for Next Working Day`
 - Formats tasks with their `[Task ID]` prefix for full traceability back to the timeline.
-- Styled interactive modal (`04_DSRDialog.html`) with live date switching, **Copy to Clipboard**, **Save to Sheet**, and **Download .txt**.
+- Styled interactive modal (`dsr/DSRDialog.html`) with live date switching, **Copy to Clipboard**, **Save to Sheet**, and **Download .txt**.
 
 ### 6. Four Top-Level Toolbar Menus
 Clean, modular top-level menu hierarchy directly on the Google Sheets menu bar:
@@ -218,9 +227,9 @@ Clean, modular top-level menu hierarchy directly on the Google Sheets menu bar:
 
 ---
 
-## Configuration Guide (`03_Config.gs`)
+## Configuration Guide (`core/Config.gs`)
 
-All system parameters live centrally in `CONFIG` within [`03_Config.gs`](./03_Config.gs):
+All system parameters live centrally in `CONFIG` within [`core/Config.gs`](./core/Config.gs):
 
 ```javascript
 const CONFIG = {
@@ -262,8 +271,8 @@ const CONFIG = {
 
 ## Trigger Architecture & Real-Time Sync
 
-1. **Centralized Router in `00_Code.gs`**:
-   - `onEdit(e)` simple trigger coordinates `handleTodoQuadrantExclusiveSelect(e)` and `updateDashboardOnChange(e)`.
+1. **Centralized Router in `core/Code.gs`**:
+   - `onEdit(e)` simple trigger coordinates spreadsheet edits and `updateDashboardOnChange(e)`.
    - `onChange(e)` installable trigger listens for structural sheet changes.
 2. **Duplicate Prevention**: `setupTriggers(ss)` checks `ScriptApp.getProjectTriggers()` to guarantee only one `onChange` trigger exists.
 3. **Silent Execution**: Background updates run with `suppressAlert = true` and `keepActiveSheet = true` so active user workflows are never interrupted.
@@ -272,7 +281,7 @@ const CONFIG = {
 
 ## Developer Guidelines
 
-- **Configuration First**: Never hardcode colors, dimensions, or list items; always declare them in `03_Config.gs`.
+- **Configuration First**: Never hardcode colors, dimensions, or list items; always declare them in `core/Config.gs`.
 - **Batch Processing**: Use bulk `getValues()` and `setValues()`; avoid spreadsheet API calls inside iteration loops.
-- **Safe Gridlines**: Always use `setSheetGridlinesHidden(sheet, hidden)` in `10_Utils.gs`. Never call `sheet.setHideGridlines()` as it is not a native method on `Sheet`.
+- **Safe Gridlines**: Always use `setSheetGridlinesHidden(sheet, hidden)` in `core/Utils.gs`. Never call `sheet.setHideGridlines()` as it is not a native method on `Sheet`.
 - **Preserve User Data**: Setup and maintenance scripts must always treat existing user sheets non-destructively.

@@ -80,21 +80,22 @@ function openTaskDialog(targetDate) {
   };
 
   let htmlOutput;
-  try {
-    const template = HtmlService.createTemplateFromFile('09_TaskDialog');
-    template.dateInfo = dateInfo;
-    template.configLists = configLists;
-    htmlOutput = template.evaluate();
-  } catch (e1) {
+  const candidateNames = ['tasks/TaskDialog', 'TaskDialog', '09_TaskDialog'];
+  for (const name of candidateNames) {
     try {
-      const template = HtmlService.createTemplateFromFile('TaskDialog');
+      const template = HtmlService.createTemplateFromFile(name);
       template.dateInfo = dateInfo;
       template.configLists = configLists;
       htmlOutput = template.evaluate();
-    } catch (e2) {
-      const htmlContent = getTaskDialogHtml(dateInfo, configLists);
-      htmlOutput = HtmlService.createHtmlOutput(htmlContent);
+      if (htmlOutput) break;
+    } catch (ignore) {
+      // Continue to next candidate
     }
+  }
+
+  if (!htmlOutput) {
+    const htmlContent = getTaskDialogHtml(dateInfo, configLists);
+    htmlOutput = HtmlService.createHtmlOutput(htmlContent);
   }
 
   htmlOutput
