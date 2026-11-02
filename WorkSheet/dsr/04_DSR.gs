@@ -59,7 +59,7 @@ function getDSRDataForDate(dateStr) {
  */
 function showDSRDialog(targetDate, isToday) {
   const dsrData = compileDSRData(targetDate, isToday);
-  const candidateNames = ['dsr/DSRDialog', 'DSRDialog', '04_DSRDialog'];
+  const candidateNames = ['dsr/04_DSRDialog', '04_DSRDialog', 'dsr/DSRDialog', 'DSRDialog'];
   for (const name of candidateNames) {
     try {
       const template = HtmlService.createTemplateFromFile(name);

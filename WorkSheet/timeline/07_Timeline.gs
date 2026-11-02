@@ -578,7 +578,7 @@ function handleMonthSheetEdit(sheet, row, col, e) {
 function openRecordDecisionDialog() {
   const allTasks = getAllTodoTasks();
   let htmlOutput;
-  const candidateNames = ['timeline/DecisionDialog', 'DecisionDialog', '14_DecisionDialog'];
+  const candidateNames = ['timeline/07_DecisionDialog', '07_DecisionDialog', 'timeline/DecisionDialog', 'DecisionDialog', '14_DecisionDialog'];
   for (const name of candidateNames) {
     try {
       const template = HtmlService.createTemplateFromFile(name);
@@ -664,7 +664,7 @@ function openTaskHistoryDialog(preSelectedTaskId) {
   const taskDetails = targetId ? getTodoTaskById(targetId) : null;
 
   let htmlOutput;
-  const candidateNames = ['timeline/TimelineDialog', 'TimelineDialog', '14_TimelineDialog'];
+  const candidateNames = ['timeline/07_TimelineDialog', '07_TimelineDialog', 'timeline/TimelineDialog', 'TimelineDialog', '14_TimelineDialog'];
   for (const name of candidateNames) {
     try {
       const template = HtmlService.createTemplateFromFile(name);

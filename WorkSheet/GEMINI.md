@@ -18,26 +18,26 @@ This file serves as persistent memory and context for Antigravity (the equivalen
 | Module | File | Primary Role | Key Functions / Objects |
 | :--- | :--- | :--- | :--- |
 | **`root`** | [`WorkSheet/Code.gs`](./Code.gs) | Master entry points & trigger routing | `setupWorkTracker`, `initializeWorkTracker`, `rebuildLists`, `setupTriggers`, `onEdit`, `onChange` |
-| **`core/`** | [`WorkSheet/core/Config.gs`](./core/Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Dimensions, Fonts, Dashboard) |
-| **`core/`** | [`WorkSheet/core/Lists.gs`](./core/Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
-| **`core/`** | [`WorkSheet/core/Menu.gs`](./core/Menu.gs) | Toolbar UI menus | `onOpen` (four top-level menus: `WorkSheet`, `Setup`, `Tasks`, `DSR`) |
-| **`core/`** | [`WorkSheet/core/Utils.gs`](./core/Utils.gs) | Helper utilities | `trimSheet`, `getSpreadsheet`, `getTimezone`, `getToday`, `setSheetGridlinesHidden` |
-| **`tasks/`** | [`WorkSheet/tasks/MonthSheet.gs`](./tasks/MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
-| **`tasks/`** | [`WorkSheet/tasks/Tasks.gs`](./tasks/Tasks.gs) | Task operations & batch insertion | `fillTaskForToday`, `fillTaskForSelectedDate`, `setupDropdowns`, `saveTasksBatch`, `clearTasks` |
-| **`tasks/`** | [`WorkSheet/tasks/TaskDialog.html`](./tasks/TaskDialog.html) | Multi-task batch entry modal UI | Dedicated HTML template with `Ctrl + Enter` and `+ Add & Next Project` |
-| **`todo/`** | [`WorkSheet/todo/Todo.gs`](./todo/Todo.gs) | Simplified 5-column Todo backlog | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `ensureAllTodoRowsHaveIds`, `updateTodoTaskIdsNamedRange` |
-| **`timeline/`** | [`WorkSheet/timeline/Timeline.gs`](./timeline/Timeline.gs) | Decisions & Task Timeline audit engine | `ensureDecisionsSheet`, `formatDecisionsSheet`, `generateNextTaskId`, `generateNextTimelineId`, `recordTimelineEvent`, `getTaskTimelineHistory`, `getAllTodoTasks`, `handleSpreadsheetEdit`, `submitDecisionEvent`, `loadTaskTimelineData` |
-| **`timeline/`** | [`WorkSheet/timeline/DecisionDialog.html`](./timeline/DecisionDialog.html) | Decision & event logging modal UI | Dedicated HTML template for recording decisions linked to Task IDs |
-| **`timeline/`** | [`WorkSheet/timeline/TimelineDialog.html`](./timeline/TimelineDialog.html) | Visual task timeline & audit modal UI | Dedicated HTML template for viewing task audit trails and decisions |
-| **`dashboard/`** | [`WorkSheet/dashboard/Dashboard.gs`](./dashboard/Dashboard.gs) | Modern SaaS Command Center (14 Cols) | `refreshDashboard`, `updateDashboardOnChange`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` |
-| **`dsr/`** | [`WorkSheet/dsr/CalendarPicker.gs`](./dsr/CalendarPicker.gs) | Visual calendar date picker controller | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
-| **`dsr/`** | [`WorkSheet/dsr/CalendarPickerDialog.html`](./dsr/CalendarPickerDialog.html) | Visual calendar picker modal UI | Dedicated HTML template with Google Fonts and keyboard navigation |
-| **`dsr/`** | [`WorkSheet/dsr/DSR.gs`](./dsr/DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
-| **`dsr/`** | [`WorkSheet/dsr/DSRDialog.html`](./dsr/DSRDialog.html) | DSR interactive modal UI | Dedicated HTML template with live date switcher and export buttons |
-| **`styles/`** | [`WorkSheet/styles/ConditionalFormatting.gs`](./styles/ConditionalFormatting.gs) | Dynamic semantic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
-| **`styles/`** | [`WorkSheet/styles/Formatting.gs`](./styles/Formatting.gs) | Visual layout & styling | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` |
-| **`admin/`** | [`WorkSheet/admin/Migration.gs`](./admin/Migration.gs) | Non-destructive system migration engine | `runFullSystemMigration`, `migrateTodoSheet`, `migrateAllMonthSheets`, `seedBaselineTimelineEvents` |
-| **`admin/`** | [`WorkSheet/admin/SampleData.gs`](./admin/SampleData.gs) | Sample & dummy data engine | `populateDummyData`, `populateTodoDummyData`, `populateMonthDummyData`, `populateDecisionsDummyData` |
+| **`admin/`** | [`WorkSheet/admin/01_Migration.gs`](./admin/01_Migration.gs) | Non-destructive system migration engine | `runFullSystemMigration`, `migrateTodoSheet`, `migrateAllMonthSheets`, `seedBaselineTimelineEvents` |
+| **`admin/`** | [`WorkSheet/admin/01_SampleData.gs`](./admin/01_SampleData.gs) | Sample & dummy data engine | `populateDummyData`, `populateTodoDummyData`, `populateMonthDummyData`, `populateDecisionsDummyData` |
+| **`core/`** | [`WorkSheet/core/02_Config.gs`](./core/02_Config.gs) | Central configuration | `CONFIG` (Headers, Lists, Colors, Dimensions, Fonts, Dashboard) |
+| **`core/`** | [`WorkSheet/core/02_Lists.gs`](./core/02_Lists.gs) | Reference lists & protection | `createListsSheet`, `ensureListsSheet`, `createNamedRanges`, `protectListsSheet` |
+| **`core/`** | [`WorkSheet/core/02_Menu.gs`](./core/02_Menu.gs) | Toolbar UI menus | `onOpen` (four top-level menus: `WorkSheet`, `Setup`, `Tasks`, `DSR`) |
+| **`core/`** | [`WorkSheet/core/02_Utils.gs`](./core/02_Utils.gs) | Helper utilities | `trimSheet`, `ensureSheetCapacity`, `getSpreadsheet`, `getTimezone`, `getToday`, `setSheetGridlinesHidden` |
+| **`dashboard/`** | [`WorkSheet/dashboard/03_Dashboard.gs`](./dashboard/03_Dashboard.gs) | Modern SaaS Command Center (14 Cols) | `refreshDashboard`, `updateDashboardOnChange`, `renderKpiCards`, `renderTablesSection`, `renderTodoSection` |
+| **`dsr/`** | [`WorkSheet/dsr/04_CalendarPicker.gs`](./dsr/04_CalendarPicker.gs) | Visual calendar date picker controller | `openCalendarPicker`, `proceedFromCalendar`, `getCalendarPickerHtml` |
+| **`dsr/`** | [`WorkSheet/dsr/04_CalendarPickerDialog.html`](./dsr/04_CalendarPickerDialog.html) | Visual calendar picker modal UI | Dedicated HTML template with Google Fonts and keyboard navigation |
+| **`dsr/`** | [`WorkSheet/dsr/04_DSR.gs`](./dsr/04_DSR.gs) | Daily Status Report engine | `generateDSRForToday`, `generateDSRForSelectedDate`, `showDSRDialog`, `saveDSRToSheet` |
+| **`dsr/`** | [`WorkSheet/dsr/04_DSRDialog.html`](./dsr/04_DSRDialog.html) | DSR interactive modal UI | Dedicated HTML template with live date switcher and export buttons |
+| **`styles/`** | [`WorkSheet/styles/05_ConditionalFormatting.gs`](./styles/05_ConditionalFormatting.gs) | Dynamic semantic color rules | `setupConditionalFormatting`, `setupWeekendFormatting` |
+| **`styles/`** | [`WorkSheet/styles/05_Formatting.gs`](./styles/05_Formatting.gs) | Visual layout & styling | `formatWorkTracker`, `formatHeader`, `formatColumns`, `formatDimensions`, `formatBorders` |
+| **`tasks/`** | [`WorkSheet/tasks/06_MonthSheet.gs`](./tasks/06_MonthSheet.gs) | Monthly sheet engine | `createCurrentMonthSheet`, `createMonthRows` |
+| **`tasks/`** | [`WorkSheet/tasks/06_Tasks.gs`](./tasks/06_Tasks.gs) | Task operations & batch insertion | `fillTaskForToday`, `fillTaskForSelectedDate`, `setupDropdowns`, `saveTasksBatch`, `clearTasks` |
+| **`tasks/`** | [`WorkSheet/tasks/06_TaskDialog.html`](./tasks/06_TaskDialog.html) | Multi-task batch entry modal UI | Dedicated HTML template with `Ctrl + Enter` and `+ Add & Next Project` |
+| **`timeline/`** | [`WorkSheet/timeline/07_Timeline.gs`](./timeline/07_Timeline.gs) | Decisions & Task Timeline audit engine | `ensureDecisionsSheet`, `formatDecisionsSheet`, `generateNextTaskId`, `generateNextTimelineId`, `recordTimelineEvent`, `getTaskTimelineHistory`, `getAllTodoTasks`, `handleSpreadsheetEdit`, `submitDecisionEvent`, `loadTaskTimelineData` |
+| **`timeline/`** | [`WorkSheet/timeline/07_DecisionDialog.html`](./timeline/07_DecisionDialog.html) | Decision & event logging modal UI | Dedicated HTML template for recording decisions linked to Task IDs |
+| **`timeline/`** | [`WorkSheet/timeline/07_TimelineDialog.html`](./timeline/07_TimelineDialog.html) | Visual task timeline & audit modal UI | Dedicated HTML template for viewing task audit trails and decisions |
+| **`todo/`** | [`WorkSheet/todo/08_Todo.gs`](./todo/08_Todo.gs) | Simplified 5-column Todo backlog | `createTodoSheet`, `ensureTodoSheet`, `setupTodoStructure`, `formatTodoSheet`, `ensureAllTodoRowsHaveIds`, `updateTodoTaskIdsNamedRange` |
 | — | [`WorkSheet/README.md`](./README.md) | User & developer documentation | Comprehensive documentation of the WorkSheet modern SaaS system |
 
 ---

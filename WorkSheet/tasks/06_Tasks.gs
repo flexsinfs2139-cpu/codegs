@@ -80,7 +80,7 @@ function openTaskDialog(targetDate) {
   };
 
   let htmlOutput;
-  const candidateNames = ['tasks/TaskDialog', 'TaskDialog', '09_TaskDialog'];
+  const candidateNames = ['tasks/06_TaskDialog', '06_TaskDialog', 'tasks/TaskDialog', 'TaskDialog', '09_TaskDialog'];
   for (const name of candidateNames) {
     try {
       const template = HtmlService.createTemplateFromFile(name);
