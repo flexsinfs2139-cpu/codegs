@@ -129,18 +129,27 @@ function compileDSRData(targetDate, isToday) {
     );
     const rows = dataRange.getValues();
 
+    const dateIdx = CONFIG.HEADERS.indexOf('Date');
+    const taskIdIdx = CONFIG.HEADERS.indexOf('Task ID');
+    const projectIdx = CONFIG.HEADERS.indexOf('Project');
+    const taskIdx = CONFIG.HEADERS.indexOf('Task');
+    const categoryIdx = CONFIG.HEADERS.indexOf('Category');
+    const priorityIdx = CONFIG.HEADERS.indexOf('Priority');
+    const statusIdx = CONFIG.HEADERS.indexOf('Status');
+
     rows.forEach(row => {
-      const cellDate = row[0];
+      const cellDate = dateIdx >= 0 ? row[dateIdx] : row[0];
       if (!isMatchingDate(cellDate, targetDate, timezone)) {
         return;
       }
 
-      const rawProject = row[2] ? String(row[2]).trim() : '';
-      const rawTask = row[3] ? String(row[3]).trim() : '';
-      const rawCategory = row[4] ? String(row[4]).trim() : '';
-      const rawPriority = row[5] ? String(row[5]).trim() : '';
-      const rawStatus = row[6] ? String(row[6]).trim() : '';
-      const rawNotes = row[7] ? String(row[7]).trim() : '';
+      const rawTaskId = taskIdIdx >= 0 && row[taskIdIdx] ? String(row[taskIdIdx]).trim() : '';
+      const rawProject = projectIdx >= 0 && row[projectIdx] ? String(row[projectIdx]).trim() : '';
+      const rawTask = taskIdx >= 0 && row[taskIdx] ? String(row[taskIdx]).trim() : '';
+      const rawCategory = categoryIdx >= 0 && row[categoryIdx] ? String(row[categoryIdx]).trim() : '';
+      const rawPriority = priorityIdx >= 0 && row[priorityIdx] ? String(row[priorityIdx]).trim() : '';
+      const rawStatus = statusIdx >= 0 && row[statusIdx] ? String(row[statusIdx]).trim() : '';
+      const rawNotes = row[8] ? String(row[8]).trim() : '';
 
       // Ignore rows with completely empty task description
       if (!rawTask) {
@@ -159,7 +168,8 @@ function compileDSRData(targetDate, isToday) {
         };
       }
 
-      const itemDesc = rawCategory ? `${rawTask} (${rawCategory})` : rawTask;
+      const taskWithId = rawTaskId ? `[${rawTaskId}] ${rawTask}` : rawTask;
+      const itemDesc = rawCategory ? `${taskWithId} (${rawCategory})` : taskWithId;
       const statusLower = rawStatus.toLowerCase();
 
       if (statusLower === 'completed') {

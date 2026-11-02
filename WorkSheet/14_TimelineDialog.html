@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Varela+Round&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Varela Round', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 20px 24px;
+      font-size: 13px;
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .header-title h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-title p {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 3px;
+    }
+    .task-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    select {
+      font-family: 'Varela Round', sans-serif;
+      font-size: 13px;
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      max-width: 340px;
+    }
+    select:focus {
+      border-color: #2563eb;
+    }
+    .task-hero-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .task-hero-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .task-id-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .project-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .due-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 11px;
+      color: #b45309;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+    .task-hero-desc {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.4;
+    }
+    .task-hero-notes {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    /* Timeline Container */
+    .timeline-container {
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 6px;
+      position: relative;
+    }
+    .timeline-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .timeline-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .timeline-stream {
+      position: relative;
+      margin-left: 16px;
+      padding-left: 20px;
+      border-left: 2px solid #e2e8f0;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .timeline-item:last-child {
+      margin-bottom: 4px;
+    }
+    .timeline-node {
+      position: absolute;
+      left: -27px;
+      top: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+    }
+    .node-created { border-color: #2563eb; background: #eff6ff; }
+    .node-status { border-color: #4338ca; background: #e0e7ff; }
+    .node-decision { border-color: #7e22ce; background: #f3e8ff; }
+    .node-blocker { border-color: #dc2626; background: #fef2f2; }
+    .node-resolved { border-color: #16a34a; background: #f0fdf4; }
+    .node-completed { border-color: #059669; background: #ecfdf5; }
+    .node-cancelled { border-color: #64748b; background: #f1f5f9; }
+
+    .timeline-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .timeline-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .event-type-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .tag-created { background: #eff6ff; color: #1d4ed8; }
+    .tag-status { background: #e0e7ff; color: #4338ca; }
+    .tag-decision { background: #f3e8ff; color: #7e22ce; }
+    .tag-blocker { background: #fef2f2; color: #b91c1c; }
+    .tag-resolved { background: #f0fdf4; color: #15803d; }
+    .tag-completed { background: #ecfdf5; color: #047857; }
+    .tag-cancelled { background: #f1f5f9; color: #475569; }
+
+    .event-date {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .status-transition {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 11px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #334155;
+      margin-left: auto;
+    }
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .timeline-rationale {
+      font-size: 12px;
+      color: #475569;
+      background: #f8fafc;
+      border-left: 3px solid #cbd5e1;
+      padding: 6px 10px;
+      margin-top: 6px;
+      border-radius: 0 4px 4px 0;
+      line-height: 1.4;
+    }
+    .timeline-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .footer-bar {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      transition: background-color 0.15s;
+    }
+    .btn:hover { background: #f1f5f9; }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <div class="header-title">
+      <h2>🔍 Task History & Timeline</h2>
+      <p>Chronological audit log of decisions, blockers, and lifecycle changes.</p>
+    </div>
+    <div class="task-selector-wrap">
+      <select id="taskSelect" onchange="onTaskChange(this.value)">
+        <? if (tasks && tasks.length) { ?>
+          <? for (var i = 0; i < tasks.length; i++) { ?>
+            <option value="<?= tasks[i].id ?>" <?= tasks[i].id === selectedTaskId ? 'selected' : '' ?>>
+              <?= tasks[i].id ?> — <?= tasks[i].description ?>
+            </option>
+          <? } ?>
+        <? } else { ?>
+          <option value="">No tasks available</option>
+        <? } ?>
+      </select>
+    </div>
+  </div>
+
+  <div id="heroCard" class="task-hero-card">
+    <div class="task-hero-top">
+      <span id="heroId" class="task-id-badge"><?= selectedTaskId || 'TSK-0000' ?></span>
+      <span id="heroProject" class="project-badge"><?= taskDetails ? (taskDetails.project || 'General') : 'General' ?></span>
+      <span id="heroDue" class="due-badge" style="<?= taskDetails && taskDetails.dueDate ? '' : 'display:none;' ?>">
+        Due: <span id="heroDueVal"><?= taskDetails ? taskDetails.dueDate : '' ?></span>
+      </span>
+    </div>
+    <div id="heroDesc" class="task-hero-desc"><?= taskDetails ? taskDetails.description : 'Task Overview' ?></div>
+    <div id="heroNotes" class="task-hero-notes" style="<?= taskDetails && taskDetails.notes ? '' : 'display:none;' ?>">
+      Notes: <span id="heroNotesVal"><?= taskDetails ? taskDetails.notes : '' ?></span>
+    </div>
+  </div>
+
+  <div class="timeline-container">
+    <div id="timelineStream" class="timeline-stream">
+      <!-- Injected dynamically via JS or server templating -->
+      <? if (events && events.length) { ?>
+        <? for (var e = 0; e < events.length; e++) { ?>
+          <? var ev = events[e]; ?>
+          <div class="timeline-item">
+            <div class="timeline-node <?= getNodeClass(ev.eventType) ?>"></div>
+            <div class="timeline-card">
+              <div class="timeline-meta">
+                <span class="event-type-tag <?= getTagClass(ev.eventType) ?>"><?= ev.eventType ?></span>
+                <span class="event-date"><?= ev.eventDate ?></span>
+                <? if (ev.newStatus && ev.newStatus !== '-') { ?>
+                  <span class="status-transition"><?= ev.prevStatus ?> ➔ <?= ev.newStatus ?></span>
+                <? } ?>
+              </div>
+              <div class="timeline-title"><?= ev.decision || ev.eventType ?></div>
+              <? if (ev.rationale) { ?>
+                <div class="timeline-rationale">“<?= ev.rationale ?>”</div>
+              <? } ?>
+              <div class="timeline-footer">
+                <? if (ev.decidedBy) { ?><span>👤 <?= ev.decidedBy ?></span><? } ?>
+                <? if (ev.nextAction) { ?><span>🎯 Next: <?= ev.nextAction ?></span><? } ?>
+                <? if (ev.reference) { ?><span>🔗 <?= ev.reference ?></span><? } ?>
+              </div>
+            </div>
+          </div>
+        <? } ?>
+      <? } else { ?>
+        <div class="empty-state">No timeline events recorded yet for this task.</div>
+      <? } ?>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <button class="btn" onclick="google.script.host.close()">Close</button>
+  </div>
+
+  <script>
+    function getNodeClass(eventType) {
+      if (eventType === 'Task Created') return 'node-created';
+      if (eventType === 'Status Changed') return 'node-status';
+      if (eventType === 'Decision Made') return 'node-decision';
+      if (eventType === 'Blocker Identified') return 'node-blocker';
+      if (eventType === 'Blocker Resolved') return 'node-resolved';
+      if (eventType === 'Task Completed') return 'node-completed';
+      if (eventType === 'Task Cancelled') return 'node-cancelled';
+      return 'node-status';
+    }
+
+    function getTagClass(eventType) {
+      if (eventType === 'Task Created') return 'tag-created';
+      if (eventType === 'Status Changed') return 'tag-status';
+      if (eventType === 'Decision Made') return 'tag-decision';
+      if (eventType === 'Blocker Identified') return 'tag-blocker';
+      if (eventType === 'Blocker Resolved') return 'tag-resolved';
+      if (eventType === 'Task Completed') return 'tag-completed';
+      if (eventType === 'Task Cancelled') return 'tag-cancelled';
+      return 'tag-status';
+    }
+
+    function onTaskChange(taskId) {
+      if (!taskId) return;
+      const stream = document.getElementById('timelineStream');
+      stream.innerHTML = '<div class="empty-state">Loading timeline...</div>';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (!res || !res.success) {
+            stream.innerHTML = '<div class="empty-state">Error loading timeline.</div>';
+            return;
+          }
+
+          // Update Hero Card
+          document.getElementById('heroId').textContent = res.taskId;
+          if (res.taskDetails) {
+            document.getElementById('heroProject').textContent = res.taskDetails.project || 'General';
+            document.getElementById('heroDesc').textContent = res.taskDetails.description || '';
+            if (res.taskDetails.dueDate) {
+              document.getElementById('heroDue').style.display = 'inline-block';
+              document.getElementById('heroDueVal').textContent = res.taskDetails.dueDate;
+            } else {
+              document.getElementById('heroDue').style.display = 'none';
+            }
+            if (res.taskDetails.notes) {
+              document.getElementById('heroNotes').style.display = 'block';
+              document.getElementById('heroNotesVal').textContent = res.taskDetails.notes;
+            } else {
+              document.getElementById('heroNotes').style.display = 'none';
+            }
+          }
+
+          // Render Events
+          if (!res.events || res.events.length === 0) {
+            stream.innerHTML = '<div class="empty-state">No timeline events recorded yet for this task.</div>';
+            return;
+          }
+
+          let html = '';
+          res.events.forEach(function(ev) {
+            const nodeCls = getNodeClass(ev.eventType);
+            const tagCls = getTagClass(ev.eventType);
+            const transition = (ev.newStatus && ev.newStatus !== '-')
+              ? '<span class="status-transition">' + ev.prevStatus + ' ➔ ' + ev.newStatus + '</span>'
+              : '';
+            const rationale = ev.rationale
+              ? '<div class="timeline-rationale">“' + ev.rationale + '”</div>'
+              : '';
+            const decidedBy = ev.decidedBy ? '<span>👤 ' + ev.decidedBy + '</span>' : '';
+            const nextAction = ev.nextAction ? '<span>🎯 Next: ' + ev.nextAction + '</span>' : '';
+            const reference = ev.reference ? '<span>🔗 ' + ev.reference + '</span>' : '';
+
+            html += '<div class="timeline-item">' +
+              '<div class="timeline-node ' + nodeCls + '"></div>' +
+              '<div class="timeline-card">' +
+                '<div class="timeline-meta">' +
+                  '<span class="event-type-tag ' + tagCls + '">' + ev.eventType + '</span>' +
+                  '<span class="event-date">' + ev.eventDate + '</span>' +
+                  transition +
+                '</div>' +
+                '<div class="timeline-title">' + (ev.decision || ev.eventType) + '</div>' +
+                rationale +
+                '<div class="timeline-footer">' + decidedBy + nextAction + reference + '</div>' +
+              '</div>' +
+            '</div>';
+          });
+
+          stream.innerHTML = html;
+        })
+        .loadTaskTimelineData(taskId);
+    }
+  </script>
+
+</body>
+</html>

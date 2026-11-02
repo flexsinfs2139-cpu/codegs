@@ -186,7 +186,8 @@ function saveTasksBatch(payload) {
 
   if (matchingRowIndices.length > 0) {
     const firstRowIndex = matchingRowIndices[0];
-    const existingTask = monthSheet.getRange(firstRowIndex, 4).getValue(); // Col 4 is Task
+    const taskCol = CONFIG.HEADERS.indexOf('Task') + 1;
+    const existingTask = monthSheet.getRange(firstRowIndex, taskCol).getValue();
     const isFirstRowEmpty = !existingTask || String(existingTask).trim() === '';
 
     let remainingTasks = cleanedTasks;
@@ -195,7 +196,8 @@ function saveTasksBatch(payload) {
     if (isFirstRowEmpty) {
       // 1. Fill first task into the existing template row for this date
       const t1 = cleanedTasks[0];
-      monthSheet.getRange(firstRowIndex, 3, 1, 5).setValues([[
+      monthSheet.getRange(firstRowIndex, 3, 1, 6).setValues([[
+        '', // Task ID
         project,
         t1,
         category,
@@ -205,6 +207,17 @@ function saveTasksBatch(payload) {
       firstSavedRow = firstRowIndex;
       remainingTasks = cleanedTasks.slice(1);
       insertAfterRow = firstRowIndex;
+
+      try {
+        recordTimelineEvent({
+          taskId: 'GENERAL',
+          eventType: 'Task Created',
+          decision: `[${project}] ${t1}`,
+          rationale: 'Logged via batch task entry',
+          newStatus: status,
+          prevStatus: '-'
+        });
+      } catch (e) {}
     }
 
     // 2. If there are more tasks, insert new rows directly after with the SAME Date and Day
@@ -215,10 +228,11 @@ function saveTasksBatch(payload) {
       monthSheet.insertRowAfter(insertAfterRow);
       const newRow = insertAfterRow + 1;
 
-      // Columns: Date, Day, Project, Task, Category, Priority, Status (7 columns)
+      // Columns: Date, Day, Task ID, Project, Task, Category, Priority, Status (8 columns)
       monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length).setValues([[
         dateVal,
         dayVal,
+        '', // Task ID
         project,
         taskText,
         category,
@@ -247,12 +261,24 @@ function saveTasksBatch(payload) {
         .setFontWeight('bold')
         .setHorizontalAlignment('center');
 
-      monthSheet.getRange(newRow, 3).setHorizontalAlignment('center');
-      monthSheet.getRange(newRow, 4).setHorizontalAlignment('left');
-      monthSheet.getRange(newRow, 5, 1, 3).setHorizontalAlignment('center');
+      monthSheet.getRange(newRow, 3).setFontFamily(CONFIG.FONTS.DIGITS).setFontWeight('bold').setHorizontalAlignment('center');
+      monthSheet.getRange(newRow, 4).setHorizontalAlignment('center');
+      monthSheet.getRange(newRow, 5).setHorizontalAlignment('left');
+      monthSheet.getRange(newRow, 6, 1, 3).setHorizontalAlignment('center');
 
       formatBorders(monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length));
       setupDropdownsForRow(monthSheet, newRow);
+
+      try {
+        recordTimelineEvent({
+          taskId: 'GENERAL',
+          eventType: 'Task Created',
+          decision: `[${project}] ${taskText}`,
+          rationale: 'Logged via batch task entry',
+          newStatus: status,
+          prevStatus: '-'
+        });
+      } catch (e) {}
 
       insertAfterRow = newRow;
     });
@@ -266,6 +292,7 @@ function saveTasksBatch(payload) {
       monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length).setValues([[
         fallbackDateLabel,
         fallbackDayLabel,
+        '', // Task ID
         project,
         taskText,
         category,
@@ -276,12 +303,23 @@ function saveTasksBatch(payload) {
       monthSheet.setRowHeight(newRow, 42);
       setupDropdownsForRow(monthSheet, newRow);
       formatBorders(monthSheet.getRange(newRow, 1, 1, CONFIG.HEADERS.length));
+
+      try {
+        recordTimelineEvent({
+          taskId: 'GENERAL',
+          eventType: 'Task Created',
+          decision: `[${project}] ${taskText}`,
+          rationale: 'Logged via batch task entry',
+          newStatus: status,
+          prevStatus: '-'
+        });
+      } catch (e) {}
     });
   }
 
   // Refocus user on the month sheet and highlight the added row
   ss.setActiveSheet(monthSheet);
-  monthSheet.setActiveSelection(`D${firstSavedRow}`);
+  monthSheet.setActiveSelection(`E${firstSavedRow}`);
 
   // Automatically update the Command Center Dashboard in the background
   try {
@@ -300,19 +338,25 @@ function saveTasksBatch(payload) {
 }
 
 /**
- * Applies dropdown validation rules for the 7-column month sheet.
- * Col 3: Projects, Col 5: Categories, Col 6: Priorities, Col 7: Statuses
+ * Applies dropdown validation rules for the 8-column month sheet.
+ * Col 3: Task ID, Col 4: Projects, Col 6: Categories, Col 7: Priorities, Col 8: Statuses
  */
 function setupDropdowns(sheet) {
   const rowCount = Math.max(sheet.getLastRow() - 1, 20);
   const ss = sheet.getParent();
 
-  const rules = {
-    3: createDropdownRule(ss, 'Projects'),
-    5: createDropdownRule(ss, 'Categories'),
-    6: createDropdownRule(ss, 'Priorities'),
-    7: createDropdownRule(ss, 'Statuses')
-  };
+  const taskIdCol = CONFIG.HEADERS.indexOf('Task ID') + 1;
+  const projectCol = CONFIG.HEADERS.indexOf('Project') + 1;
+  const categoryCol = CONFIG.HEADERS.indexOf('Category') + 1;
+  const priorityCol = CONFIG.HEADERS.indexOf('Priority') + 1;
+  const statusCol = CONFIG.HEADERS.indexOf('Status') + 1;
+
+  const rules = {};
+  if (taskIdCol > 0) rules[taskIdCol] = createDropdownRule(ss, CONFIG.NAMED_RANGES.TODO_TASK_IDS || 'TodoTaskIds');
+  if (projectCol > 0) rules[projectCol] = createDropdownRule(ss, 'Projects');
+  if (categoryCol > 0) rules[categoryCol] = createDropdownRule(ss, 'Categories');
+  if (priorityCol > 0) rules[priorityCol] = createDropdownRule(ss, 'Priorities');
+  if (statusCol > 0) rules[statusCol] = createDropdownRule(ss, 'Statuses');
 
   Object.entries(rules).forEach(([column, rule]) => {
     if (rule) {
@@ -329,12 +373,18 @@ function setupDropdowns(sheet) {
 function setupDropdownsForRow(sheet, row) {
   const ss = sheet.getParent();
 
-  const rules = {
-    3: createDropdownRule(ss, 'Projects'),
-    5: createDropdownRule(ss, 'Categories'),
-    6: createDropdownRule(ss, 'Priorities'),
-    7: createDropdownRule(ss, 'Statuses')
-  };
+  const taskIdCol = CONFIG.HEADERS.indexOf('Task ID') + 1;
+  const projectCol = CONFIG.HEADERS.indexOf('Project') + 1;
+  const categoryCol = CONFIG.HEADERS.indexOf('Category') + 1;
+  const priorityCol = CONFIG.HEADERS.indexOf('Priority') + 1;
+  const statusCol = CONFIG.HEADERS.indexOf('Status') + 1;
+
+  const rules = {};
+  if (taskIdCol > 0) rules[taskIdCol] = createDropdownRule(ss, CONFIG.NAMED_RANGES.TODO_TASK_IDS || 'TodoTaskIds');
+  if (projectCol > 0) rules[projectCol] = createDropdownRule(ss, 'Projects');
+  if (categoryCol > 0) rules[categoryCol] = createDropdownRule(ss, 'Categories');
+  if (priorityCol > 0) rules[priorityCol] = createDropdownRule(ss, 'Priorities');
+  if (statusCol > 0) rules[statusCol] = createDropdownRule(ss, 'Statuses');
 
   Object.entries(rules).forEach(([column, rule]) => {
     if (rule) {
@@ -362,8 +412,8 @@ function createDropdownRule(ss, namedRange) {
 }
 
 /**
- * Clears task data while safeguarding against accidental clearing of the Lists sheet.
- * Clears Columns 3 to 7 (Project through Status), resetting Status to 'Pending'.
+ * Clears task data while safeguarding against accidental clearing of protected sheets.
+ * Clears Columns 3 to 8 (Task ID through Status), resetting Status to 'Pending'.
  */
 function clearTasks() {
   const ui = SpreadsheetApp.getUi();
@@ -373,7 +423,8 @@ function clearTasks() {
   if (
     sheet.getName() === CONFIG.LISTS_SHEET_NAME ||
     sheet.getName() === CONFIG.TODO_SHEET_NAME ||
-    sheet.getName() === CONFIG.DASHBOARD_SHEET_NAME
+    sheet.getName() === CONFIG.DASHBOARD_SHEET_NAME ||
+    sheet.getName() === CONFIG.DECISIONS_SHEET_NAME
   ) {
     ui.alert(`Cannot clear tasks on the ${sheet.getName()} sheet.`);
     return;
@@ -394,14 +445,17 @@ function clearTasks() {
     return;
   }
 
-  // Clear Project through Status (Cols 3 to 7: 5 columns)
+  const numColsToClear = CONFIG.HEADERS.length - 2; // Col 3 to 8 (6 columns)
+  const statusCol = CONFIG.HEADERS.indexOf('Status') + 1; // Col 8
+
+  // Clear Task ID through Status
   sheet
-    .getRange(2, 3, lastRow - 1, 5)
+    .getRange(2, 3, lastRow - 1, numColsToClear)
     .clearContent();
 
-  // Restore default status to Pending (Col 7)
+  // Restore default status to Pending
   sheet
-    .getRange(2, 7, lastRow - 1, 1)
+    .getRange(2, statusCol, lastRow - 1, 1)
     .setValue('Pending');
 
   // Automatically update the Command Center Dashboard in the background

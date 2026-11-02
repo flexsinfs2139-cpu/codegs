@@ -129,14 +129,16 @@ function createMonthRows(
       task < CONFIG.DEFAULT_TASKS_PER_DAY;
       task++
     ) {
+      // 8 Columns: Date, Day, Task ID, Project, Task, Category, Priority, Status
       rows.push([
         dateLabel,
         dayLabel,
-        '',
-        '',
-        '',
-        '',
-        'Pending'
+        '',       // Task ID
+        '',       // Project
+        '',       // Task
+        '',       // Category
+        '',       // Priority
+        'Pending' // Status
       ]);
     }
   }

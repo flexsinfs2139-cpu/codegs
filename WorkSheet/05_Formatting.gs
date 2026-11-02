@@ -49,6 +49,7 @@ function formatHeader(sheet) {
 
 
 function formatColumns(sheet) {
+  // Column A: Date
   sheet
     .getRange('A:A')
     .setFontFamily(CONFIG.FONTS.DIGITS)
@@ -57,18 +58,36 @@ function formatColumns(sheet) {
     .setHorizontalAlignment('center')
     .setNumberFormat('0000');
 
+  // Column B: Day
   sheet
     .getRange('B:B')
     .setFontFamily(CONFIG.FONTS.TEXT)
     .setHorizontalAlignment('center');
 
-  sheet.getRange('C:C')
+  // Column C: Task ID
+  sheet
+    .getRange('C:C')
+    .setFontFamily(CONFIG.FONTS.DIGITS)
+    .setFontWeight('bold')
     .setHorizontalAlignment('center');
 
-  sheet.getRange('D:D')
-    .setHorizontalAlignment('left');
+  // Column D: Project
+  sheet
+    .getRange('D:D')
+    .setFontFamily(CONFIG.FONTS.TEXT)
+    .setHorizontalAlignment('center');
 
-  sheet.getRange('E:G')
+  // Column E: Task
+  sheet
+    .getRange('E:E')
+    .setFontFamily(CONFIG.FONTS.TEXT)
+    .setHorizontalAlignment('left')
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+
+  // Column F..H: Category, Priority, Status
+  sheet
+    .getRange('F:H')
+    .setFontFamily(CONFIG.FONTS.TEXT)
     .setHorizontalAlignment('center');
 }
 
@@ -77,6 +96,7 @@ function formatDimensions(sheet) {
   const widths = (CONFIG.DIMENSIONS && CONFIG.DIMENSIONS.MONTH_COL_WIDTHS) || [
     75,   // Date
     60,   // Day
+    100,  // Task ID
     130,  // Project
     340,  // Task
     130,  // Category

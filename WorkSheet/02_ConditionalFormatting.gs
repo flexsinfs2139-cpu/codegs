@@ -3,8 +3,9 @@
 // ============================================================
 
 /**
- * Configures semantic status and priority conditional formatting on a Month sheet.
- * Uses restrained SaaS pastel backgrounds with readable dark text defined in CONFIG.
+ * Configures semantic status and priority conditional formatting on an 8-column Month sheet.
+ * Priority: Column G
+ * Status: Column H
  *
  * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
  */
@@ -14,12 +15,12 @@ function setupConditionalFormatting(sheet) {
   const prioColors = CONFIG.COLORS.PRIORITY;
 
   // -------------------------
-  // PRIORITY (Column F)
+  // PRIORITY (Column G)
   // -------------------------
 
   rules.push(
     textRule(
-      sheet.getRange('F2:F'),
+      sheet.getRange('G2:G'),
       'Urgent',
       prioColors.URGENT.bg,
       prioColors.URGENT.text
@@ -28,7 +29,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('F2:F'),
+      sheet.getRange('G2:G'),
       'High',
       prioColors.HIGH.bg,
       prioColors.HIGH.text
@@ -37,7 +38,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('F2:F'),
+      sheet.getRange('G2:G'),
       'Medium',
       prioColors.MEDIUM.bg,
       prioColors.MEDIUM.text
@@ -46,7 +47,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('F2:F'),
+      sheet.getRange('G2:G'),
       'Low',
       prioColors.LOW.bg,
       prioColors.LOW.text
@@ -54,12 +55,12 @@ function setupConditionalFormatting(sheet) {
   );
 
   // -------------------------
-  // STATUS (Column G)
+  // STATUS (Column H)
   // -------------------------
 
   rules.push(
     textRule(
-      sheet.getRange('G2:G'),
+      sheet.getRange('H2:H'),
       'In Progress',
       statusColors.IN_PROGRESS.bg,
       statusColors.IN_PROGRESS.text
@@ -68,7 +69,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('G2:G'),
+      sheet.getRange('H2:H'),
       'Completed',
       statusColors.COMPLETED.bg,
       statusColors.COMPLETED.text
@@ -77,7 +78,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('G2:G'),
+      sheet.getRange('H2:H'),
       'Blocked',
       statusColors.BLOCKED.bg,
       statusColors.BLOCKED.text
@@ -86,7 +87,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('G2:G'),
+      sheet.getRange('H2:H'),
       'Pending',
       statusColors.PENDING.bg,
       statusColors.PENDING.text
@@ -95,7 +96,7 @@ function setupConditionalFormatting(sheet) {
 
   rules.push(
     textRule(
-      sheet.getRange('G2:G'),
+      sheet.getRange('H2:H'),
       'Cancelled',
       statusColors.CANCELLED.bg,
       statusColors.CANCELLED.text
@@ -128,86 +129,25 @@ function textRule(range, text, background, fontColor) {
 function setupWeekendFormatting(sheet) {
   const rules = sheet.getConditionalFormatRules() || [];
 
-  // Saturday: soft muted gray
+  // Saturday: soft muted gray across columns A to H
   rules.push(
     SpreadsheetApp
       .newConditionalFormatRule()
       .whenFormulaSatisfied('=$B2="Sat"')
       .setBackground('#f8fafc')
       .setFontColor('#64748b')
-      .setRanges([sheet.getRange('A2:G')])
+      .setRanges([sheet.getRange('A2:H')])
       .build()
   );
 
-  // Sunday: soft muted warm tint
+  // Sunday: soft muted warm tint across columns A to H
   rules.push(
     SpreadsheetApp
       .newConditionalFormatRule()
       .whenFormulaSatisfied('=$B2="Sun"')
       .setBackground('#fef2f2')
       .setFontColor('#b91c1c')
-      .setRanges([sheet.getRange('A2:G')])
-      .build()
-  );
-
-  sheet.setConditionalFormatRules(rules);
-}
-
-
-/**
- * Applies visual highlight rules to the Eisenhower Matrix checkboxes in the Todo sheet.
- * When a checkbox is checked (TRUE), its cell receives that quadrant's accent color:
- * - Q1: Do (Urgent & Important) -> Soft Red
- * - Q2: Schedule (Important, Not Urgent) -> Soft Blue
- * - Q3: Delegate (Urgent, Not Important) -> Soft Yellow
- * - Q4: Don't Do (Neither) -> Soft Gray
- *
- * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
- */
-function setupTodoConditionalFormatting(sheet) {
-  const rules = [];
-
-  // Q1: Do (Column C) — Soft Red
-  rules.push(
-    SpreadsheetApp
-      .newConditionalFormatRule()
-      .whenFormulaSatisfied('=$C3=TRUE')
-      .setBackground(CONFIG.COLORS.Q1_BG)
-      .setFontColor(CONFIG.COLORS.Q1_TEXT)
-      .setRanges([sheet.getRange('C3:C')])
-      .build()
-  );
-
-  // Q2: Schedule (Column D) — Soft Blue
-  rules.push(
-    SpreadsheetApp
-      .newConditionalFormatRule()
-      .whenFormulaSatisfied('=$D3=TRUE')
-      .setBackground(CONFIG.COLORS.Q2_BG)
-      .setFontColor(CONFIG.COLORS.Q2_TEXT)
-      .setRanges([sheet.getRange('D3:D')])
-      .build()
-  );
-
-  // Q3: Delegate (Column E) — Soft Yellow
-  rules.push(
-    SpreadsheetApp
-      .newConditionalFormatRule()
-      .whenFormulaSatisfied('=$E3=TRUE')
-      .setBackground(CONFIG.COLORS.Q3_BG)
-      .setFontColor(CONFIG.COLORS.Q3_TEXT)
-      .setRanges([sheet.getRange('E3:E')])
-      .build()
-  );
-
-  // Q4: Don't Do (Column F) — Soft Gray
-  rules.push(
-    SpreadsheetApp
-      .newConditionalFormatRule()
-      .whenFormulaSatisfied('=$F3=TRUE')
-      .setBackground(CONFIG.COLORS.Q4_BG)
-      .setFontColor(CONFIG.COLORS.Q4_TEXT)
-      .setRanges([sheet.getRange('F3:F')])
+      .setRanges([sheet.getRange('A2:H')])
       .build()
   );
 

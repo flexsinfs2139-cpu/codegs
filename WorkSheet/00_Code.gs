@@ -7,16 +7,17 @@
  * Safe, idempotent, and non-destructive.
  *
  * Configures the complete Modern SaaS Work Tracker system:
- * 1. Creates required sheets if missing (Lists, Todo, Month, Dashboard)
+ * 1. Creates required sheets if missing (Lists, Todo, Month, Dashboard, Decisions)
  * 2. Verifies and updates the Lists sheet & named ranges
- * 3. Verifies and configures the Eisenhower Matrix Todo sheet
- * 4. Verifies and configures the current Month task sheet
- * 5. Builds and refreshes the Command Center Dashboard
- * 6. Configures headers, dropdowns, conditional formatting, column dimensions
- * 7. Applies Varela Round & Roboto Mono typography standards
- * 8. Configures safe gridline behavior
- * 9. Detects and registers workbook triggers without duplicates
- * 10. Strictly preserves all existing user tasks and entries
+ * 3. Verifies and configures the simplified 5-column Todo backlog sheet
+ * 4. Verifies and configures the 12-column Decisions & chronological timeline sheet
+ * 5. Verifies and configures the 8-column current Month task sheet
+ * 6. Builds and refreshes the Command Center Dashboard
+ * 7. Configures headers, dropdowns, conditional formatting, column dimensions
+ * 8. Applies Varela Round & Roboto Mono typography standards
+ * 9. Configures safe gridline behavior
+ * 10. Detects and registers workbook triggers without duplicates
+ * 11. Strictly preserves all existing user tasks and entries
  *
  * @param {boolean} [suppressAlert=false] Whether to suppress the completion UI dialog
  */
@@ -29,27 +30,31 @@ function setupWorkTracker(suppressAlert = false) {
   ensureListsSheet(ss);
   console.log('[WorkSheet] Lists verified');
 
-  // 2. Eisenhower Matrix Todo Sheet
+  // 2. Simplified Todo Sheet (5 columns: ID, Task Description, Project, Due Date, Notes)
   createTodoSheet(true);
   console.log('[WorkSheet] Todo verified');
 
-  // 3. Current Month Task Sheet
+  // 3. Decisions & Chronological Task Timeline Sheet (12 columns)
+  ensureDecisionsSheet(ss);
+  console.log('[WorkSheet] Decisions sheet verified');
+
+  // 4. Current Month Task Sheet (8 columns: Date, Day, Task ID, Project, Task, Category, Priority, Status)
   const currentMonthSheet = createCurrentMonthSheet(true);
   console.log('[WorkSheet] Current month verified');
 
-  // 4. Command Center Dashboard (14 columns, SaaS layout)
+  // 5. Command Center Dashboard (14 columns, SaaS layout)
   refreshDashboard(true, true);
   console.log('[WorkSheet] Dashboard verified');
 
-  // 5. Validations & Formatting across all Month Sheets
+  // 6. Validations & Formatting across all Month Sheets
   setupWorkbookValidationsAndFormatting(ss);
   console.log('[WorkSheet] Validations & Formatting configured');
 
-  // 6. Centralized Triggers Verification (No Duplicates)
+  // 7. Centralized Triggers Verification (No Duplicates)
   setupTriggers(ss);
   console.log('[WorkSheet] Triggers verified');
 
-  // Set active sheet to Current Month (or Dashboard if preferred)
+  // Set active sheet to Current Month
   if (currentMonthSheet) {
     ss.setActiveSheet(currentMonthSheet);
   }
@@ -61,7 +66,7 @@ function setupWorkTracker(suppressAlert = false) {
       SpreadsheetApp.getUi().alert(
         '⚡ WorkSheet Setup Complete\n\n' +
         'Modern SaaS Work Tracker has been safely verified and configured.\n' +
-        'All sheets, reference lists, formulas, and triggers are live.'
+        'All sheets, reference lists, Task IDs, Decisions timeline, and triggers are live.'
       );
     } catch (e) {
       ss.toast('WorkSheet setup completed successfully.', '⚡ WorkSheet', 4);
@@ -157,16 +162,16 @@ function setupTriggers(ss) {
 /**
  * Google Apps Script simple trigger: Automatically runs when any cell is edited.
  * Coordinates real-time updates across the entire workbook:
- * 1. Enforces mutually exclusive quadrant checkboxes in the Todo sheet.
+ * 1. Dispatches Task ID auto-population, Todo auto-ID, and Decisions timeline logs.
  * 2. Automatically updates the Command Center Dashboard with every sheet change.
  *
  * @param {GoogleAppsScript.Events.SheetsOnEdit} e
  */
 function onEdit(e) {
   try {
-    handleTodoQuadrantExclusiveSelect(e);
+    handleSpreadsheetEdit(e);
   } catch (err) {
-    console.warn('Error in handleTodoQuadrantExclusiveSelect:', err);
+    console.warn('Error in handleSpreadsheetEdit:', err);
   }
 
   try {

@@ -618,13 +618,39 @@ function renderTodoSection(sheet, ss, startRow) {
   const digitsFont = CONFIG.FONTS.DIGITS;
 
   const totalTodos = rows.length;
-  const q1Count = rows.filter(r => r[2] === true).length;
-  const q2Count = rows.filter(r => r[3] === true).length;
-  const q3Count = rows.filter(r => r[4] === true).length;
-  const q4Count = rows.filter(r => r[5] === true).length;
-  const focusRatio = totalTodos > 0
-    ? Math.round(((q1Count + q2Count) / totalTodos) * 100)
-    : 0;
+  const today = getToday();
+  const timezone = getTimezone();
+  const todayStr = Utilities.formatDate(today, timezone, 'yyyy-MM-dd');
+  const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const nextWeekStr = Utilities.formatDate(nextWeek, timezone, 'yyyy-MM-dd');
+
+  let overdueOrToday = 0;
+  let upcoming = 0;
+  let noDueDate = 0;
+  const projectSet = new Set();
+
+  rows.forEach(r => {
+    const proj = String(r[2] || '').trim();
+    if (proj) projectSet.add(proj);
+
+    const dueVal = r[3];
+    let dueStr = '';
+    if (dueVal instanceof Date) {
+      dueStr = Utilities.formatDate(dueVal, timezone, 'yyyy-MM-dd');
+    } else if (dueVal) {
+      dueStr = String(dueVal).trim();
+    }
+
+    if (!dueStr) {
+      noDueDate++;
+    } else if (dueStr <= todayStr) {
+      overdueOrToday++;
+    } else if (dueStr <= nextWeekStr) {
+      upcoming++;
+    }
+  });
+
+  const activeProjectsCount = projectSet.size;
 
   // 1. Spacer Row
   sheet.setRowHeight(startRow, 18);
@@ -632,7 +658,7 @@ function renderTodoSection(sheet, ss, startRow) {
   // 2. Section Label (Varela Round)
   const labelRow = startRow + 1;
   sheet.getRange(labelRow, 1)
-    .setValue('EISENHOWER MATRIX — TODO COMMAND')
+    .setValue('TASK BACKLOG — COMMAND & SCHEDULE')
     .setFontFamily(textFont)
     .setFontSize(9)
     .setFontWeight('bold')
@@ -640,65 +666,55 @@ function renderTodoSection(sheet, ss, startRow) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(labelRow, 26);
 
-  // 3. Six Todo KPI Cards across Rows (labelRow + 1) to (labelRow + 3)
+  // 3. Five Backlog KPI Cards across 14 Columns (3 + 3 + 3 + 2 + 3)
   const cardStartRow = labelRow + 1;
   const todoCards = [
     {
       startCol: 1,
-      numCols: 2,
-      title: '• TOTAL TODOS',
+      numCols: 3,
+      title: '• TOTAL BACKLOG',
       value: String(totalTodos),
-      sub: 'Open backlog',
+      sub: 'Open tasks in Todo',
       bg: colors.CARD_PENDING_BG,
       text: colors.CARD_PENDING_TEXT,
       border: colors.CARD_PENDING_BORDER
     },
     {
-      startCol: 3,
-      numCols: 2,
-      title: '🔴 Q1: DO',
-      value: String(q1Count),
-      sub: 'Urgent & Important',
+      startCol: 4,
+      numCols: 3,
+      title: '⚠️ DUE / OVERDUE',
+      value: String(overdueOrToday),
+      sub: 'Due today or earlier',
       bg: colors.CARD_BLOCKED_BG,
       text: colors.CARD_BLOCKED_TEXT,
       border: colors.CARD_BLOCKED_BORDER
     },
     {
-      startCol: 5,
-      numCols: 2,
-      title: '🔵 Q2: SCHEDULE',
-      value: String(q2Count),
-      sub: 'Important / Plan',
+      startCol: 7,
+      numCols: 3,
+      title: '📅 UPCOMING (7D)',
+      value: String(upcoming),
+      sub: 'Due in next 7 days',
       bg: colors.CARD_TOTAL_BG,
       text: colors.CARD_TOTAL_TEXT,
       border: colors.CARD_TOTAL_BORDER
     },
     {
-      startCol: 7,
+      startCol: 10,
       numCols: 2,
-      title: '🟡 Q3: DELEGATE',
-      value: String(q3Count),
-      sub: 'Urgent / Delegate',
-      bg: colors.CARD_ACTIVE_BG,
-      text: colors.CARD_ACTIVE_TEXT,
-      border: colors.CARD_ACTIVE_BORDER
-    },
-    {
-      startCol: 9,
-      numCols: 2,
-      title: '⚪ Q4: DON\'T DO',
-      value: String(q4Count),
-      sub: 'Drop / eliminate',
-      bg: '#f1f5f9',
+      title: '⚪ NO DUE DATE',
+      value: String(noDueDate),
+      sub: 'Unscheduled backlog',
+      bg: '#f8fafc',
       text: '#475569',
-      border: '#64748b'
+      border: '#cbd5e1'
     },
     {
-      startCol: 11,
-      numCols: 4,
-      title: '🎯 FOCUS RATIO',
-      value: `${focusRatio}%`,
-      sub: 'Q1 + Q2 share',
+      startCol: 12,
+      numCols: 3,
+      title: '📁 ACTIVE PROJECTS',
+      value: String(activeProjectsCount),
+      sub: 'Represented in backlog',
       bg: colors.CARD_DONE_BG,
       text: colors.CARD_DONE_TEXT,
       border: colors.CARD_DONE_BORDER
@@ -1003,7 +1019,7 @@ function getTodoTaskRows(ss) {
     .getRange(CONFIG.TODO_FIRST_DATA_ROW, 1, numRows, CONFIG.TODO_HEADERS.length)
     .getValues();
 
-  return values.filter(row => String(row[0] || '').trim() !== '');
+  return values.filter(row => String(row[0] || '').trim() !== '' || String(row[1] || '').trim() !== '');
 }
 
 

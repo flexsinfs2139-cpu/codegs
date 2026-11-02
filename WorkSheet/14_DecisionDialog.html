@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600;700&family=Varela+Round&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Varela Round', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 20px 24px;
+      font-size: 13px;
+    }
+    .header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header p {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .full-width {
+      grid-column: span 2;
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, select, textarea {
+      font-family: 'Varela Round', sans-serif;
+      font-size: 13px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 58px;
+    }
+    .font-digits {
+      font-family: 'Roboto Mono', monospace;
+    }
+    .footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s, transform 0.05s;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-secondary {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 600;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .alert-banner {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .alert-success {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #15803d;
+    }
+    .alert-error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>📝 Record Decision / Timeline Event</h2>
+    <p>Appends an immutable chronological event to the Decisions audit trail.</p>
+  </div>
+
+  <div id="alertBox" class="alert-banner"></div>
+
+  <form id="decisionForm">
+    <div class="form-grid">
+
+      <!-- Task ID Selector -->
+      <div class="field-group full-width">
+        <label for="taskId">Associated Task ID</label>
+        <select id="taskId" name="taskId" class="font-digits">
+          <option value="GENERAL">GENERAL — Project / Workspace Decision</option>
+          <? if (tasks && tasks.length) { ?>
+            <? for (var i = 0; i < tasks.length; i++) { ?>
+              <option value="<?= tasks[i].id ?>">
+                <?= tasks[i].id ?> — <?= tasks[i].description ?> (<?= tasks[i].project || 'General' ?>)
+              </option>
+            <? } ?>
+          <? } ?>
+        </select>
+      </div>
+
+      <!-- Event Type -->
+      <div class="field-group">
+        <label for="eventType">Event Type *</label>
+        <select id="eventType" name="eventType" required>
+          <? if (eventTypes && eventTypes.length) { ?>
+            <? for (var j = 0; j < eventTypes.length; j++) { ?>
+              <option value="<?= eventTypes[j] ?>" <?= eventTypes[j] === 'Decision Made' ? 'selected' : '' ?>>
+                <?= eventTypes[j] ?>
+              </option>
+            <? } ?>
+          <? } else { ?>
+            <option value="Decision Made">Decision Made</option>
+            <option value="Blocker Identified">Blocker Identified</option>
+            <option value="Blocker Resolved">Blocker Resolved</option>
+            <option value="Scope Changed">Scope Changed</option>
+          <? } ?>
+        </select>
+      </div>
+
+      <!-- Decided By / Owner -->
+      <div class="field-group">
+        <label for="decidedBy">Owner / Decided By</label>
+        <input type="text" id="decidedBy" name="decidedBy" placeholder="e.g. Lead Dev, Architect, Client">
+      </div>
+
+      <!-- Status Transitions (Optional) -->
+      <div class="field-group">
+        <label for="prevStatus">Previous Status</label>
+        <select id="prevStatus" name="prevStatus">
+          <option value="-">-</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label for="newStatus">New Status</label>
+        <select id="newStatus" name="newStatus">
+          <option value="-">-</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Completed">Completed</option>
+          <option value="Pending">Pending</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <!-- Core Decision / Event Title -->
+      <div class="field-group full-width">
+        <label for="decision">Decision / Event Summary *</label>
+        <input type="text" id="decision" name="decision" required placeholder="Concise statement of the decision, blocker, or event">
+      </div>
+
+      <!-- Rationale / Context -->
+      <div class="field-group full-width">
+        <label for="rationale">Rationale & Technical / Business Context</label>
+        <textarea id="rationale" name="rationale" placeholder="Why this path was chosen, alternatives considered, root cause of blocker..."></textarea>
+      </div>
+
+      <!-- Next Action & Target Due Date -->
+      <div class="field-group">
+        <label for="nextAction">Immediate Next Action</label>
+        <input type="text" id="nextAction" name="nextAction" placeholder="Actionable follow-up item">
+      </div>
+
+      <div class="field-group">
+        <label for="dueDate">Action Due Date</label>
+        <input type="date" id="dueDate" name="dueDate" class="font-digits">
+      </div>
+
+      <!-- Reference -->
+      <div class="field-group full-width">
+        <label for="reference">Reference / Ticket / PR Link</label>
+        <input type="text" id="reference" name="reference" placeholder="e.g. PR #142, JIRA-881, Meeting Notes link">
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <button type="button" class="btn btn-secondary" onclick="google.script.host.close()">Cancel</button>
+      <button type="submit" id="saveBtn" class="btn btn-primary">
+        <span>Save to Decisions Timeline</span>
+      </button>
+    </div>
+  </form>
+
+  <script>
+    document.getElementById('decisionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveBtn');
+      const alertBox = document.getElementById('alertBox');
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>Saving...</span>';
+      alertBox.style.display = 'none';
+
+      const payload = {
+        taskId: document.getElementById('taskId').value,
+        eventType: document.getElementById('eventType').value,
+        prevStatus: document.getElementById('prevStatus').value,
+        newStatus: document.getElementById('newStatus').value,
+        decision: document.getElementById('decision').value,
+        rationale: document.getElementById('rationale').value,
+        decidedBy: document.getElementById('decidedBy').value,
+        nextAction: document.getElementById('nextAction').value,
+        dueDate: document.getElementById('dueDate').value,
+        reference: document.getElementById('reference').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<span>Save to Decisions Timeline</span>';
+
+          if (res && res.success) {
+            alertBox.className = 'alert-banner alert-success';
+            alertBox.textContent = res.message || 'Event recorded successfully.';
+            alertBox.style.display = 'block';
+
+            setTimeout(function() {
+              google.script.host.close();
+            }, 1200);
+          } else {
+            alertBox.className = 'alert-banner alert-error';
+            alertBox.textContent = (res && res.message) || 'Error saving event.';
+            alertBox.style.display = 'block';
+          }
+        })
+        .withFailureHandler(function(err) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<span>Save to Decisions Timeline</span>';
+          alertBox.className = 'alert-banner alert-error';
+          alertBox.textContent = 'Script error: ' + (err.message || err);
+          alertBox.style.display = 'block';
+        })
+        .submitDecisionEvent(payload);
+    });
+  </script>
+
+</body>
+</html>

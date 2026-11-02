@@ -13,17 +13,22 @@ const CONFIG = {
     LISTS: 'Lists',
     TODO: 'Todo',
     DASHBOARD: 'Dashboard',
-    DSR: 'DSR'
+    DSR: 'DSR',
+    DECISIONS: 'Decisions'
   },
   LISTS_SHEET_NAME: 'Lists',
   TODO_SHEET_NAME: 'Todo',
   DASHBOARD_SHEET_NAME: 'Dashboard',
+  DECISIONS_SHEET_NAME: 'Decisions',
 
-  // Todo / Eisenhower Structure Settings
+  // Todo Structure Settings (Simplified 5-column layout)
   TODO_DROPDOWN_ROWS: 200,
-  TODO_STAT_ROW: 1,
-  TODO_HEADER_ROW: 2,
-  TODO_FIRST_DATA_ROW: 3,
+  TODO_HEADER_ROW: 1,
+  TODO_FIRST_DATA_ROW: 2,
+
+  // Decisions Structure Settings (12-column chronological timeline)
+  DECISIONS_HEADER_ROW: 1,
+  DECISIONS_FIRST_DATA_ROW: 2,
 
   // Design System Typography
   FONTS: {
@@ -32,9 +37,11 @@ const CONFIG = {
   },
 
   // Sheet Column Headers
+  // Monthly Work Sheet: 8 Columns
   HEADERS: [
     'Date',
     'Day',
+    'Task ID',
     'Project',
     'Task',
     'Category',
@@ -42,23 +49,40 @@ const CONFIG = {
     'Status'
   ],
 
+  // Simplified Todo Sheet: 5 Columns
   TODO_HEADERS: [
-    'Task Name',
+    'ID',
+    'Task Description',
     'Project',
-    'Q1: Do',
-    'Q2: Schedule',
-    'Q3: Delegate',
-    'Q4: Don\'t Do'
+    'Due Date',
+    'Notes'
+  ],
+
+  // Decisions & Chronological Task Timeline Sheet: 12 Columns
+  DECISIONS_HEADERS: [
+    'Timeline ID',
+    'Task ID',
+    'Event Date',
+    'Event Type',
+    'Previous Status',
+    'New Status',
+    'Decision / Event',
+    'Rationale',
+    'Decided By',
+    'Next Action',
+    'Due Date',
+    'Reference'
   ],
 
   // Layout Dimensions & Sizing
   DIMENSIONS: {
-    MONTH_COL_WIDTHS: [75, 60, 130, 340, 130, 100, 125],
+    MONTH_COL_WIDTHS: [75, 60, 100, 130, 340, 130, 100, 125],
     HEADER_ROW_HEIGHT: 28,
     DATA_ROW_HEIGHT: 42,
-    TODO_COL_WIDTHS: [340, 140, 120, 120, 120, 120],
-    TODO_STAT_ROW_HEIGHT: 32,
-    TODO_HEADER_ROW_HEIGHT: 28,
+    TODO_COL_WIDTHS: [95, 360, 140, 110, 280],
+    TODO_ROW_HEIGHT: 36,
+    DECISIONS_COL_WIDTHS: [110, 100, 140, 150, 120, 120, 280, 280, 130, 220, 100, 180],
+    DECISIONS_ROW_HEIGHT: 36,
     DASHBOARD_COL_WIDTHS: [130, 75, 75, 75, 75, 75, 85, 35, 140, 75, 75, 75, 75, 85],
     DASHBOARD_COLUMNS_COUNT: 14
   },
@@ -88,17 +112,7 @@ const CONFIG = {
       HIGH: { bg: '#fff7ed', text: '#c2410c' },
       MEDIUM: { bg: '#fefce8', text: '#854d0e' },
       LOW: { bg: '#f8fafc', text: '#64748b' }
-    },
-
-    // Eisenhower Matrix Quadrant Colors
-    Q1_BG: '#fce8e6',
-    Q1_TEXT: '#c5221f',
-    Q2_BG: '#e8f0fe',
-    Q2_TEXT: '#1a73e8',
-    Q3_BG: '#fef7e0',
-    Q3_TEXT: '#b06000',
-    Q4_BG: '#f1f3f4',
-    Q4_TEXT: '#5f6368'
+    }
   },
 
   // SaaS Command Center Dashboard Configuration
@@ -141,6 +155,32 @@ const CONFIG = {
     }
   },
 
+  // Timeline Event Types
+  EVENT_TYPES: [
+    'Task Created',
+    'Status Changed',
+    'Decision Made',
+    'Blocker Identified',
+    'Blocker Resolved',
+    'Due Date Changed',
+    'Scope Changed',
+    'Priority Changed',
+    'Task Reopened',
+    'Task Completed',
+    'Task Cancelled',
+    'Follow-up Action'
+  ],
+
+  // Named Range Identifiers
+  NAMED_RANGES: {
+    PROJECTS: 'ProjectsList',
+    CATEGORIES: 'CategoriesList',
+    PRIORITIES: 'PrioritiesList',
+    STATUSES: 'StatusesList',
+    TODO_TASK_IDS: 'TodoTaskIds',
+    EVENT_TYPES: 'EventTypesList'
+  },
+
   // Reference Lists & Validation Options
   LISTS: {
     Projects: [
@@ -177,6 +217,21 @@ const CONFIG = {
       'Blocked',
       'Completed',
       'Cancelled'
+    ],
+
+    EventTypes: [
+      'Task Created',
+      'Status Changed',
+      'Decision Made',
+      'Blocker Identified',
+      'Blocker Resolved',
+      'Due Date Changed',
+      'Scope Changed',
+      'Priority Changed',
+      'Task Reopened',
+      'Task Completed',
+      'Task Cancelled',
+      'Follow-up Action'
     ]
   }
 };
