@@ -25,6 +25,29 @@ function trimSheet(sheet, lastRow, lastCol) {
 }
 
 /**
+ * Ensures that a sheet has at least minRows rows and minCols columns.
+ * Dynamically expands the sheet if necessary so row/column operations
+ * never fail with "Those rows are out of bounds".
+ *
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * @param {number} minRows
+ * @param {number} minCols
+ */
+function ensureSheetCapacity(sheet, minRows, minCols) {
+  if (!sheet) return;
+
+  const currentRows = sheet.getMaxRows();
+  if (minRows && currentRows < minRows) {
+    sheet.insertRowsAfter(currentRows, minRows - currentRows);
+  }
+
+  const currentCols = sheet.getMaxColumns();
+  if (minCols && currentCols < minCols) {
+    sheet.insertColumnsAfter(currentCols, minCols - currentCols);
+  }
+}
+
+/**
  * Returns active spreadsheet instance.
  */
 function getSpreadsheet() {

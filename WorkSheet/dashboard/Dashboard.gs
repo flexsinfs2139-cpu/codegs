@@ -17,17 +17,8 @@ function refreshDashboard(suppressAlert = false, keepActiveSheet = false) {
   const currentActiveSheet = keepActiveSheet ? ss.getActiveSheet() : null;
   const sheet = ensureDashboardSheet(ss);
 
-  // Guarantee sufficient row & column headroom before drawing
-  const minRows = 40;
-  const currentMaxRows = sheet.getMaxRows();
-  const currentMaxCols = sheet.getMaxColumns();
-
-  if (currentMaxRows < minRows) {
-    sheet.insertRowsAfter(currentMaxRows, minRows - currentMaxRows);
-  }
-  if (currentMaxCols < CONFIG.DASHBOARD.COLUMNS_COUNT) {
-    sheet.insertColumnsAfter(currentMaxCols, CONFIG.DASHBOARD.COLUMNS_COUNT - currentMaxCols);
-  }
+  // Guarantee generous initial row & column headroom before clearing and drawing
+  ensureSheetCapacity(sheet, 100, CONFIG.DASHBOARD.COLUMNS_COUNT);
 
   sheet.clear();
   sheet.clearConditionalFormatRules();
@@ -415,6 +406,10 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
   const numMonthRows = Math.max(monthlyData.length, 1);
   const numProjRows = Math.max(projectData.length, 1);
   const dataRowCount = Math.max(numMonthRows, numProjRows);
+  const totalRowIndex = 10 + dataRowCount;
+
+  // Guarantee row capacity for table headers, data rows, total row, and buffer
+  ensureSheetCapacity(sheet, totalRowIndex + 15, CONFIG.DASHBOARD.COLUMNS_COUNT);
 
   // Populate Left Table (Monthly)
   if (monthlyData.length > 0) {
@@ -520,9 +515,7 @@ function renderTablesSection(sheet, monthlyData, projectData, totals) {
     sheet.setRowHeight(10 + r, 24);
   }
 
-  // Bottom Summary Row
-  const totalRowIndex = 10 + dataRowCount;
-
+  // Bottom Summary Row (totalRowIndex)
   // Left Summary (TOTAL / AVG)
   const leftSummary = [
     'TOTAL / AVG',
@@ -651,6 +644,9 @@ function renderTodoSection(sheet, ss, startRow) {
   });
 
   const activeProjectsCount = projectSet.size;
+
+  // Guarantee row capacity for spacer (startRow), label (startRow+1), cards (startRow+2..startRow+4), and padding
+  ensureSheetCapacity(sheet, startRow + 10, CONFIG.DASHBOARD.COLUMNS_COUNT);
 
   // 1. Spacer Row
   sheet.setRowHeight(startRow, 18);
@@ -1052,6 +1048,6 @@ function formatDashboardSheet(sheet, lastRow) {
   sheet.setFrozenRows(2);
   setSheetGridlinesHidden(sheet, true);
 
-  const finalRows = Math.max(lastRow, 14);
+  const finalRows = Math.max(lastRow + 2, 35);
   trimSheet(sheet, finalRows, CONFIG.DASHBOARD.COLUMNS_COUNT);
 }

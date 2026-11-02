@@ -82,6 +82,7 @@ function populateTodoDummyData(ss) {
   ];
 
   const numRows = sampleTodos.length;
+  ensureSheetCapacity(sheet, CONFIG.TODO_FIRST_DATA_ROW + numRows + 5, CONFIG.TODO_HEADERS.length);
 
   sheet
     .getRange(CONFIG.TODO_FIRST_DATA_ROW, 1, numRows, CONFIG.TODO_HEADERS.length)
@@ -205,6 +206,7 @@ function populateMonthDummyData(ss, today, timezone) {
     }
   }
 
+  ensureSheetCapacity(sheet, rows.length + 5, CONFIG.HEADERS.length);
   sheet.getRange(2, 1, rows.length, CONFIG.HEADERS.length).setValues(rows);
 
   trimSheet(sheet, rows.length + 1, CONFIG.HEADERS.length);
@@ -246,6 +248,7 @@ function populateDecisionsDummyData(ss) {
   ];
 
   const numRows = sampleDecisions.length;
+  ensureSheetCapacity(sheet, CONFIG.DECISIONS_FIRST_DATA_ROW + numRows + 5, CONFIG.DECISIONS_HEADERS.length);
   sheet.getRange(CONFIG.DECISIONS_FIRST_DATA_ROW, 1, numRows, CONFIG.DECISIONS_HEADERS.length).setValues(sampleDecisions);
   formatDecisionsSheet(sheet);
 
